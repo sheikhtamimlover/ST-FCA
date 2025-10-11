@@ -598,7 +598,7 @@ function loginHelper(appState, Cookie, email, password, globalOptions, callback)
           const userDataMatch = String(html).match(/\["CurrentUserInitialData",\[\],({.*?}),\d+\]/);
           if (userDataMatch) {
             const info = JSON.parse(userDataMatch[1]);
-            console.log(`[FCA-INFO] Đăng nhập tài khoản: ${info.NAME} (${info.USER_ID})`);
+            console.log(`[FCA-INFO] Bot Name: ${info.NAME} (${info.USER_ID})`);
           } else if (userID) {
             console.log(`[FCA-INFO] ID người dùng: ${userID}`);
           }
@@ -623,7 +623,7 @@ function loginHelper(appState, Cookie, email, password, globalOptions, callback)
             console.error(error);
             console.error("Database connection failed:", error && error.message ? error.message : String(error));
           });
-        console.log("[FCA-INFO] FCA fix/update by DongDev (Donix-VN)");
+        console.log("[FCA-INFO] FCA maintain by ST | Sheikh Tamim");
         const ctxMain = {
           userID,
           jar,

@@ -120,7 +120,7 @@ module.exports = function (defaultFuncs, api, ctx) {
       ctx._autoCycleTimer = null;
     }
     ctx._autoCycleTimer = setInterval(forceCycle, 60 * 60 * 1000);
-    console.log("[FCA-INFO] MQTT auto-cycle enabled 3600000ms");
+    console.log("[FCA-INFO] MQTT auto-cycle enabled 1hour");
     if (!ctx.firstListen || !ctx.lastSeqId) getSeqIDWrapper();
     else {
       console.log("[FCA-INFO] MQTT starting listenMqtt");

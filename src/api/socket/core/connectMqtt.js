@@ -88,7 +88,7 @@ module.exports = function createListenMqtt(deps) {
     });
     mqttClient.on("connect", function () {
       if (process.env.OnStatus === undefined) {
-        console.log("[FCA-INFO] fca-unofficial connected");
+        console.log("[FCA-INFO] ST FCA connected");
         process.env.OnStatus = true;
       }
       topics.forEach(topicsub => mqttClient.subscribe(topicsub));
