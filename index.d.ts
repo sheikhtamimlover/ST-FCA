@@ -1,6 +1,6 @@
 // Origin: NOCOM-BOT/mod_fbmsg_legacy
 
-declare module '@sheikhtamimlover/fca-unofficial' {
+declare module 'stfca' {
     import type { Readable, Duplex, Transform } from "stream";
     import type EventEmitter from "events";
 

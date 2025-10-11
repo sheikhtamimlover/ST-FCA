@@ -1,7 +1,7 @@
-# @sheikhtamimlover/fca-unofficial
+# stfca
 
-[![npm version](https://img.shields.io/npm/v/@sheikhtamimlover/fca-unofficial.svg)](https://www.npmjs.com/package/@sheikhtamimlover/fca-unofficial)
-[![npm downloads](https://img.shields.io/npm/dm/@sheikhtamimlover/fca-unofficial.svg)](https://www.npmjs.com/package/@sheikhtamimlover/fca-unofficial)
+[![npm version](https://img.shields.io/npm/v/stfca.svg)](https://www.npmjs.com/package/stfca)
+[![npm downloads](https://img.shields.io/npm/dm/stfca.svg)](https://www.npmjs.com/package/stfca)
 
 > **Unofficial Facebook Chat API for Node.js** - Interact with Facebook Messenger programmatically
 
@@ -22,7 +22,7 @@
 
 Facebook now has an [official API for chat bots](https://developers.facebook.com/docs/messenger-platform), however it's only available for Facebook Pages.
 
-`@sheikhtamimlover/fca-unofficial` is the only API that allows you to automate chat functionalities on a **user account** by emulating the browser. This means:
+`stfca` is the only API that allows you to automate chat functionalities on a **user account** by emulating the browser. This means:
 
 - Making the exact same GET/POST requests as a browser
 - Does not work with auth tokens
@@ -31,7 +31,7 @@ Facebook now has an [official API for chat bots](https://developers.facebook.com
 ## 📦 Installation
 
 ```bash
-npm install @sheikhtamimlover/fca-unofficial@latest
+npm install stfca@latest
 ```
 
 ## 🚀 Basic Usage
@@ -39,7 +39,7 @@ npm install @sheikhtamimlover/fca-unofficial@latest
 ### 1. Login and Simple Echo Bot
 
 ```javascript
-const login = require("@sheikhtamimlover/fca-unofficial");
+const login = require("stfca");
 
 login({ appState: [] }, (err, api) => {
     if (err) return console.error(err);
@@ -56,7 +56,7 @@ login({ appState: [] }, (err, api) => {
 ### 2. Send Text Message
 
 ```javascript
-const login = require("@sheikhtamimlover/fca-unofficial");
+const login = require("stfca");
 
 login({ appState: [] }, (err, api) => {
     if (err) {
@@ -79,7 +79,7 @@ login({ appState: [] }, (err, api) => {
 ### 3. Send File/Image
 
 ```javascript
-const login = require("@sheikhtamimlover/fca-unofficial");
+const login = require("stfca");
 const fs = require("fs");
 
 login({ appState: [] }, (err, api) => {
@@ -127,7 +127,7 @@ login({ appState: [] }, (err, api) => {
 
 ```javascript
 const fs = require("fs");
-const login = require("@sheikhtamimlover/fca-unofficial");
+const login = require("stfca");
 
 const credentials = { appState: [] };
 
@@ -151,7 +151,7 @@ login(credentials, (err, api) => {
 
 ```javascript
 const fs = require("fs");
-const login = require("@sheikhtamimlover/fca-unofficial");
+const login = require("stfca");
 
 login(
     { appState: JSON.parse(fs.readFileSync("appstate.json", "utf8")) },
@@ -175,7 +175,7 @@ login(
 
 ```javascript
 const fs = require("fs");
-const login = require("@sheikhtamimlover/fca-unofficial");
+const login = require("stfca");
 
 login(
     { appState: JSON.parse(fs.readFileSync("appstate.json", "utf8")) },
@@ -316,7 +316,7 @@ If this project is helpful, please give it a ⭐ on GitHub!
 
 ## 🔗 Links
 
-- [NPM Package](https://www.npmjs.com/package/@sheikhtamimlover/fca-unofficial)
+- [NPM Package](https://www.npmjs.com/package/stfca)
 - [GitHub Repository](https://github.com/sheikhtamimlover/fca-unofficial)
 - [Issue Tracker](https://github.com/sheikhtamimlover/fca-unofficial/issues)
 
