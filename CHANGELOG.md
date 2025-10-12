@@ -3,7 +3,7 @@
 
 All notable changes to ST-FCA will be documented in this file.
 
-## [1.0.0] - 2025-01-13
+## [1.0.3] - 2025-01-13
 
 ### Added
 - 🎨 Enhanced MQTT connection logging with visual indicators
