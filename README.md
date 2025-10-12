@@ -1,9 +1,52 @@
-# stfca
+# ST-FCA (stfca)
 
 [![npm version](https://img.shields.io/npm/v/stfca.svg)](https://www.npmjs.com/package/stfca)
 [![npm downloads](https://img.shields.io/npm/dm/stfca.svg)](https://www.npmjs.com/package/stfca)
+[![GitHub](https://img.shields.io/github/license/sheikhtamimlover/ST-FCA)](https://github.com/sheikhtamimlover/ST-FCA)
 
-> **Unofficial Facebook Chat API for Node.js** - Interact with Facebook Messenger programmatically
+> **Unofficial Facebook Chat API for Node.js** - Interact with Facebook Messenger programmatically for ST-BOT 
+> 
+> **Enhanced & Maintained by ST | Sheikh Tamim**
+
+## 🌟 What's New in ST-FCA
+
+- ✨ Enhanced MQTT connection logging
+- 🔄 Auto-reconnect with configurable intervals
+- 📊 Better connection status indicators
+- 🎨 Improved console output with colors
+- 🔐 Enhanced security and stability
+- 🚀 Automatic update checking and installation
+- 💡 Better error handling and debugging
+
+## 📦 Installation
+
+```bash
+npm install stfca
+```
+
+Or with yarn:
+
+```bash
+yarn add stfca
+```
+
+## 🔄 Auto-Update Feature
+
+ST-FCA includes an automatic update checker that runs when your bot starts. When a new version is available:
+
+1. 📋 Shows recent changes
+2. 💾 Creates automatic backups
+3. 📦 Downloads and installs updates
+4. 🔄 Restarts automatically to apply changes
+
+### Manual Update Check
+
+You can also check for updates manually:
+
+```javascript
+const { checkForFCAUpdate } = require('stfca/checkUpdate.js');
+await checkForFCAUpdate();
+```
 
 ## ⚠️ Important Disclaimer
 

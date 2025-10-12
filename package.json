@@ -1,69 +1,45 @@
+
 {
   "name": "stfca",
-  "version": "1.0.2",
-  "description": "Unofficial Facebook Chat API for Node.js",
+  "version": "1.0.3",
+  "description": "Unofficial Facebook Chat API for Node.js - Enhanced by ST | Sheikh Tamim",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"No tests specified\" && exit 0",
-    "lint": "eslint .",
-    "prepublishOnly": "echo \"Preparing to publish...\""
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sheikhtamimlover/fca-unofficial.git"
+    "url": "git+https://github.com/sheikhtamimlover/ST-FCA.git"
   },
   "keywords": [
     "facebook",
     "chat",
     "api",
-    "messenger",
     "bot",
+    "messenger",
     "unofficial",
-    "automation",
-    "facebook-api",
-    "facebook-chat",
-    "facebook-messenger",
-    "chatbot",
-    "nodejs",
-    "fca"
+    "fca",
+    "st-fca",
+    "sheikh-tamim"
   ],
-  "author": {
-    "name": "ST | Sheikh Tamim",
-    "url": "https://www.facebook.com/hamza.chudena"
-  },
+  "author": "ST | Sheikh Tamim",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/sheikhtamimlover/fca-unofficial/issues"
+    "url": "https://github.com/sheikhtamimlover/ST-FCA/issues"
   },
-  "homepage": "https://github.com/sheikhtamimlover/fca-unofficial#readme",
-  "engines": {
-    "node": ">=12.0.0"
-  },
+  "homepage": "https://github.com/sheikhtamimlover/ST-FCA#readme",
   "dependencies": {
-    "axios": "latest",
-    "axios-cookiejar-support": "^5.0.5",
+    "axios": "^1.4.0",
     "bluebird": "^3.7.2",
-    "chalk": "^4.1.2",
-    "cheerio": "^1.0.0-rc.10",
-    "duplexify": "^4.1.3",
-    "gradient-string": "^2.0.2",
-    "https-proxy-agent": "^4.0.0",
-    "mqtt": "^4.3.8",
-    "npmlog": "^1.2.0",
-    "request": "^2.53.0",
-    "sequelize": "^6.37.6",
-    "sqlite3": "^5.1.7",
-    "totp-generator": "^1.0.0",
-    "ws": "^8.18.1"
+    "cheerio": "^1.0.0-rc.12",
+    "https-proxy-agent": "^5.0.1",
+    "mqtt": "^4.3.7",
+    "npmlog": "^7.0.1",
+    "request": "^2.88.2",
+    "websocket-stream": "^5.5.2"
   },
-  "devDependencies": {
-    "eslint": "^8.50.0",
-    "mocha": "^10.2.0"
-  },
-  "optionalDependencies": {},
-  "peerDependencies": {},
-  "publishConfig": {
-    "access": "public",
-    "registry": "https://registry.npmjs.org/"
+  "engines": {
+    "node": ">=14.0.0"
   }
 }
