@@ -112,11 +112,37 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
     mqttClient.on('connect', function () {
         topics.forEach(topicsub => mqttClient.subscribe(topicsub));
 
-        // Display connection success message with branding
-        console.log('\n✅ ST-FCA MQTT Connected');
-        console.log(`📍 Region: ${ctx.region || 'PNB'}`);
-        console.log(`🔄 Auto-reconnect: ${ctx.globalOptions.autoReconnect ? 'Enabled' : 'Disabled'}${ctx.globalOptions.autoReconnect ? ' (reconnects every 3s on disconnect)' : ''}`);
-        console.log('🎨 Maintained & Enhanced by ST | Sheikh Tamim\n');
+        // Display connection success message with branding and loading animation
+        const messages = [
+            '\n✅ ST-FCA MQTT Connected',
+            `📍 Region: ${ctx.region || 'PNB'}`,
+            `🔄 Auto-reconnect: ${ctx.globalOptions.autoReconnect ? 'Enabled' : 'Disabled'}${ctx.globalOptions.autoReconnect ? ' (reconnects every 3s on disconnect)' : ''}`,
+            `⏱️  MQTT Restart Interval: ${ctx.globalOptions.restartListenMqtt?.enable ? `${ctx.globalOptions.restartListenMqtt.timeRestart / 1000}s` : 'Disabled'}`,
+            '🎨 Maintained & Enhanced by ST | Sheikh Tamim\n'
+        ];
+
+        let index = 0;
+        const displayMessages = () => {
+            if (index < messages.length) {
+                const frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+                let frameIndex = 0;
+                
+                const loadingInterval = setInterval(() => {
+                    process.stdout.write(`\r${frames[frameIndex]} Loading...`);
+                    frameIndex = (frameIndex + 1) % frames.length;
+                }, 80);
+
+                setTimeout(() => {
+                    clearInterval(loadingInterval);
+                    process.stdout.write('\r' + ' '.repeat(20) + '\r');
+                    console.log(messages[index]);
+                    index++;
+                    displayMessages();
+                }, 500);
+            }
+        };
+
+        displayMessages();
 
         var topic;
         var queue = {
@@ -220,6 +246,11 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
                 let fmtMsg;
                 try {
                     fmtMsg = utils.formatDeltaMessage(v);
+                    // Detect if it's a DM or group thread
+                    const otherUserFbId = v.delta.messageMetadata.threadKey.otherUserFbId;
+                    const threadFbId = v.delta.messageMetadata.threadKey.threadFbId;
+                    fmtMsg.isSingleUser = !!otherUserFbId;
+                    fmtMsg.isGroup = !!threadFbId;
                 } catch (err) {
                     return globalCallback({
                         error: "Problem parsing message object.",
