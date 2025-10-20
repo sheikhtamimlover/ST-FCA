@@ -8,24 +8,24 @@ async function checkForFCAUpdate() {
     try {
         console.log('\x1b[33m%s\x1b[0m', '🔍 Checking for ST-FCA updates...');
         
-        // Get latest version from GitHub
-        const { data: packageData } = await axios.get(
-            'https://raw.githubusercontent.com/sheikhtamimlover/ST-FCA/main/package.json'
+        // Get latest version from npm registry
+        const { data: npmData } = await axios.get(
+            'https://registry.npmjs.org/stfca/latest'
         );
         
-        const latestVersion = packageData.version;
-        const currentPackagePath = path.join(__dirname, 'package.json');
+        const latestVersion = npmData.version;
         
-        // Check if package.json exists
-        let currentVersion = '1.0.3';
-        if (fs.existsSync(currentPackagePath)) {
-            const currentPackage = JSON.parse(fs.readFileSync(currentPackagePath, 'utf-8'));
-            currentVersion = currentPackage.version;
+        // Check current installed version in node_modules
+        let currentVersion = '1.0.8';
+        const nodeModulesPackagePath = path.join(process.cwd(), 'node_modules', 'stfca', 'package.json');
+        if (fs.existsSync(nodeModulesPackagePath)) {
+            const installedPackage = JSON.parse(fs.readFileSync(nodeModulesPackagePath, 'utf-8'));
+            currentVersion = installedPackage.version;
         }
         
         if (latestVersion !== currentVersion) {
             console.log('\x1b[32m%s\x1b[0m', `✨ New ST-FCA version available: ${latestVersion} (current: ${currentVersion})`);
-            console.log('\x1b[33m%s\x1b[0m', '📦 Updating ST-FCA...');
+            console.log('\x1b[33m%s\x1b[0m', '📦 Updating ST-FCA package...');
             
             // Show changelog
             try {
@@ -41,15 +41,15 @@ async function checkForFCAUpdate() {
                 // Silently ignore changelog fetch errors
             }
             
-            // Perform comprehensive update
-            await performComprehensiveUpdate();
+            // Update npm package
+            await updateNpmPackage(latestVersion);
             
             console.log('\x1b[32m%s\x1b[0m', '✅ ST-FCA updated successfully!');
             console.log('\x1b[33m%s\x1b[0m', '🔄 Restarting to apply changes...');
             
             // Restart the process
             setTimeout(() => {
-                process.exit(0);
+                process.exit(2);
             }, 1000);
             
             return true;
@@ -60,6 +60,24 @@ async function checkForFCAUpdate() {
     } catch (error) {
         console.log('\x1b[31m%s\x1b[0m', '❌ Failed to check for ST-FCA updates:', error.message);
         return false;
+    }
+}
+
+async function updateNpmPackage(version) {
+    try {
+        console.log('\x1b[36m%s\x1b[0m', '📦 Running npm install stfca@latest...');
+        
+        // Execute npm install command
+        execSync('npm install stfca@latest --save', {
+            cwd: process.cwd(),
+            stdio: 'inherit'
+        });
+        
+        console.log('\x1b[32m%s\x1b[0m', '✅ Package updated successfully!');
+        return true;
+    } catch (error) {
+        console.log('\x1b[31m%s\x1b[0m', '❌ Failed to update package:', error.message);
+        throw error;
     }
 }
 
@@ -205,4 +223,4 @@ function deleteLocalFile(filePath) {
     }
 }
 
-module.exports = { checkForFCAUpdate, performComprehensiveUpdate };
+module.exports = { checkForFCAUpdate, performComprehensiveUpdate, updateNpmPackage };

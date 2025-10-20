@@ -1,15 +1,13 @@
 {
   "name": "stfca",
-  "version": "1.0.8",
-  "description": "Unofficial Facebook Chat API for Node.js - Enhanced by ST | Sheikh Tamim",
+  "version": "1.0.9",
+  "description": "Unofficial Facebook Chat API for Node.js with Auto-Update System - Enhanced by ST | Sheikh Tamim",
   "main": "index.js",
   "files": [
     "src/",
     "index.js",
     "utils.js",
-    "checkUpdate.js",
-    "README.md",
-    "CHANGELOG.md"
+    "checkUpdate.js"
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

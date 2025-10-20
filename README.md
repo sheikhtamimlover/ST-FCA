@@ -32,21 +32,48 @@ yarn add stfca
 
 ## 🔄 Auto-Update Feature
 
-ST-FCA includes an automatic update checker that runs when your bot starts. When a new version is available:
+ST-FCA includes an **automatic update system** that keeps your package up-to-date seamlessly:
 
-1. 📋 Shows recent changes
-2. 💾 Creates automatic backups
-3. 📦 Downloads and installs updates
-4. 🔄 Restarts automatically to apply changes
+### How It Works
 
-### Manual Update Check
+1. 🔍 **Automatic Check**: Checks for updates when you start your bot
+2. 📋 **Shows Changes**: Displays recent changelog updates
+3. 📦 **NPM Update**: Runs `npm install stfca@latest` automatically
+4. 🔄 **Auto-Restart**: Restarts your bot to apply changes
 
-You can also check for updates manually:
+### For Bot Projects
+
+If you're using ST-FCA in your bot project (like [ST-BOT](https://github.com/sheikhtamimlover/ST-BOT)), the package will:
+
+- ✅ Detect when a new version is available
+- ✅ Automatically update to the latest version via npm
+- ✅ Update your `node_modules/stfca` folder
+- ✅ Restart your bot with the new version
+
+### Manual Update
+
+You can also update manually:
+
+```bash
+npm install stfca@latest
+```
+
+Or check for updates programmatically:
 
 ```javascript
 const { checkForFCAUpdate } = require('stfca/checkUpdate.js');
 await checkForFCAUpdate();
 ```
+
+### Update Notifications
+
+The auto-update system will:
+- Show the current and latest versions
+- Display recent changes from the changelog
+- Inform you when the update is complete
+- Automatically restart your application
+
+**Note**: Updates are non-blocking and won't interrupt your bot's startup if the update check fails.
 
 ## ⚠️ Important Disclaimer
 

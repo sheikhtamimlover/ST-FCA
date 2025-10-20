@@ -13,6 +13,17 @@ const Boolean_Option = ['online', 'selfListen', 'listenEvents', 'updatePresence'
 global.ditconmemay = false;
 global.stfcaUpdateChecked = false;
 
+// Auto-check for updates on package load (non-blocking)
+if (!global.stfcaUpdateChecked) {
+    global.stfcaUpdateChecked = true;
+    const { checkForFCAUpdate } = require("./checkUpdate");
+    setImmediate(() => {
+        checkForFCAUpdate().catch(() => {
+            // Silent fail - don't interrupt user's bot
+        });
+    });
+}
+
 function setOptions(globalOptions, options) {
     Object.keys(options).map(function (key) {
         switch (Boolean_Option.includes(key)) {
