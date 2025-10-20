@@ -1,6 +1,6 @@
 {
   "name": "stfca",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Unofficial Facebook Chat API for Node.js - Enhanced by ST | Sheikh Tamim",
   "main": "index.js",
   "files": [
@@ -37,16 +37,20 @@
   },
   "homepage": "https://github.com/sheikhtamimlover/ST-FCA#readme",
   "dependencies": {
-    "axios": "^1.4.0",
+    "axios": "^1.8.4",
     "bluebird": "^3.7.2",
-    "cheerio": "^1.0.0-rc.12",
+    "chalk": "^4.1.2",
+    "cheerio": "^1.0.0-rc.10",
     "duplexify": "^4.1.3",
-    "https-proxy-agent": "^5.0.1",
-    "mqtt": "^4.3.7",
-    "npmlog": "^7.0.1",
-    "request": "^2.88.2",
-    "websocket-stream": "^5.5.2",
-    "ws": "^8.18.3"
+    "gradient-string": "^2.0.2",
+    "https-proxy-agent": "^4.0.0",
+    "mqtt": "^4.3.8",
+    "npmlog": "^1.2.0",
+    "request": "^2.53.0",
+    "sequelize": "^6.37.6",
+    "sqlite3": "^5.1.7",
+    "totp-generator": "^1.0.0",
+    "ws": "^8.18.1"
   },
   "engines": {
     "node": ">=14.0.0"
