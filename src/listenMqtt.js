@@ -246,11 +246,17 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
                 let fmtMsg;
                 try {
                     fmtMsg = utils.formatDeltaMessage(v);
-                    // Detect if it's a DM or group thread
+                    // Detect if it's a DM or group thread - enhanced detection
                     const otherUserFbId = v.delta.messageMetadata.threadKey.otherUserFbId;
                     const threadFbId = v.delta.messageMetadata.threadKey.threadFbId;
-                    fmtMsg.isSingleUser = !!otherUserFbId;
+                    
+                    // A thread is a DM if it has otherUserFbId and no threadFbId
+                    fmtMsg.isSingleUser = !!otherUserFbId && !threadFbId;
                     fmtMsg.isGroup = !!threadFbId;
+                    
+                    // Store thread type in context for sendMessage to use
+                    if (!ctx.threadTypes) ctx.threadTypes = {};
+                    ctx.threadTypes[fmtMsg.threadID] = fmtMsg.isSingleUser ? 'dm' : 'group';
                 } catch (err) {
                     return globalCallback({
                         error: "Problem parsing message object.",

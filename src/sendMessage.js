@@ -102,7 +102,7 @@ module.exports = (defaultFuncs, api, ctx) => {
 		return messageInfo;
 	}
 
-	return async (msg, threadID, callback, replyToMessage, isSingleUser = false) => {
+	return async (msg, threadID, callback, replyToMessage, isSingleUser = null) => {
 		// Handle different parameter patterns for backward compatibility
 		if (typeof callback === "string" || (callback && typeof callback === "object")) {
 			// callback is actually replyToMessage, shift parameters
@@ -121,6 +121,15 @@ module.exports = (defaultFuncs, api, ctx) => {
 		if (replyToMessage && messageIDType !== 'String' && messageIDType !== 'string') throw new Error("MessageID should be of type string and not " + messageIDType + ".");
 		if (msgType === "String") {
 			msg = { body: msg };
+		}
+		
+		// Auto-detect if this is a DM if not explicitly specified
+		if (isSingleUser === null && ctx.threadTypes && ctx.threadTypes[threadID]) {
+			isSingleUser = ctx.threadTypes[threadID] === 'dm';
+		} else if (isSingleUser === null) {
+			// Fallback: check if threadID looks like a user ID (15 digits) vs group ID (longer)
+			const threadIDStr = threadID.toString();
+			isSingleUser = threadIDStr.length === 15 || !threadIDStr.match(/^\d{16,}$/);
 		}
 		let disallowedProperties = Object.keys(msg).filter(prop => !allowedProperties[prop]);
 		if (disallowedProperties.length > 0) {

@@ -1,6 +1,6 @@
 {
   "name": "stfca",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Unofficial Facebook Chat API for Node.js - Enhanced by ST | Sheikh Tamim",
   "main": "index.js",
   "files": [

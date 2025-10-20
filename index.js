@@ -174,7 +174,8 @@ function buildAPI(globalOptions, html, jar) {
         callback_Task: {},
         wsReqNumber: 0,
         wsTaskNumber: 0,
-        reqCallbacks: {}
+        reqCallbacks: {},
+        threadTypes: {} // Store thread type (dm/group) for each thread
     };
     var api = {
         setOptions: setOptions.bind(null, globalOptions),
@@ -222,6 +223,26 @@ function buildAPI(globalOptions, html, jar) {
     };
     //if (noMqttData) api.htmlData = noMqttData;
     require('fs').readdirSync(__dirname + '/src/').filter(v => v.endsWith('.js')).forEach(v => { api[v.replace('.js', '')] = require(`./src/${v}`)(utils.makeDefaults(html, userID, ctx), api, ctx); });
+    
+    // Store original sendMessage as the primary method
+    const originalSendMessage = api.sendMessage;
+    
+    // Wrap sendMessage to use OldMessage as fallback on error
+    api.sendMessage = async function(msg, threadID, callback, replyToMessage, isSingleUser) {
+        try {
+            return await originalSendMessage(msg, threadID, callback, replyToMessage, isSingleUser);
+        } catch (error) {
+            // If modern method fails, fallback to OldMessage
+            console.log('sendMessage failed, using OldMessage fallback:', error.message);
+            return api.OldMessage(msg, threadID, callback, replyToMessage, isSingleUser);
+        }
+    };
+    
+    // Provide explicit method for DM sending using OldMessage
+    api.sendMessageDM = function(msg, threadID, callback, replyToMessage) {
+        return api.OldMessage(msg, threadID, callback, replyToMessage, true);
+    };
+    
     api.listen = api.listenMqtt;
     return {
         ctx,

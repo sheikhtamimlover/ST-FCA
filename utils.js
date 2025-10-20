@@ -733,17 +733,23 @@ function formatDeltaMessage(m) {
     var args = body == "" ? [] : body.trim().split(/\s+/);
     for (var i = 0; i < m_id.length; i++) mentions[m_id[i]] = m.delta.body.substring(m_offset[i], m_offset[i] + m_length[i]);
 
+    // Determine if this is a DM or group
+    const otherUserFbId = md.threadKey.otherUserFbId;
+    const threadFbId = md.threadKey.threadFbId;
+    const isSingleUser = !!otherUserFbId && !threadFbId;
+
     return {
         type: "message",
         senderID: formatID(md.actorFbId.toString()),
-        threadID: formatID((md.threadKey.threadFbId || md.threadKey.otherUserFbId).toString()),
+        threadID: formatID((threadFbId || otherUserFbId).toString()),
         messageID: md.messageId,
         args: args,
         body: body,
         attachments: (m.delta.attachments || []).map(v => _formatAttachment(v)),
         mentions: mentions,
         timestamp: md.timestamp,
-        isGroup: !!md.threadKey.threadFbId,
+        isGroup: !!threadFbId,
+        isSingleUser: isSingleUser,
         participantIDs: m.delta.participants || (md.cid ? md.cid.canonicalParticipantFbids : []) || []
     };
 }
@@ -751,6 +757,11 @@ function formatDeltaMessage(m) {
 function formatID(id) {
     if (id != undefined && id != null) return id.replace(/(fb)?id[:.]/, "");
     else return id;
+}
+
+function isDMThread(threadID) {
+    // DM threads don't have 't_' prefix and are typically numeric user IDs
+    return typeof threadID === 'string' && !threadID.includes('t_');
 }
 
 function formatMessage(m) {
@@ -2872,5 +2883,6 @@ module.exports = {
     decodeClientPayload,
     getAppState,
     getAdminTextMessageType,
-    setProxy
+    setProxy,
+    isDMThread
 };
