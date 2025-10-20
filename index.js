@@ -3,6 +3,7 @@
 var utils = require("./utils");
 var cheerio = require("cheerio");
 var log = require("npmlog");
+var { checkForFCAUpdate } = require("./checkUpdate");
 /*var { getThemeColors } = require("../../func/utils/log.js");
 var logger = require("../../func/utils/log.js");
 var { cra, cv, cb, co } = getThemeColors();*/
@@ -10,6 +11,7 @@ log.maxRecordSize = 100;
 var checkVerified = null;
 const Boolean_Option = ['online', 'selfListen', 'listenEvents', 'updatePresence', 'forceLogin', 'autoMarkDelivery', 'autoMarkRead', 'listenTyping', 'autoReconnect', 'emitReady'];
 global.ditconmemay = false;
+global.stfcaUpdateChecked = false;
 
 function setOptions(globalOptions, options) {
     Object.keys(options).map(function (key) {
@@ -407,6 +409,14 @@ function loginHelper(appState, email, password, globalOptions, callback, prCallb
 
 
 function login(loginData, options, callback) {
+    // Check for updates (non-blocking, only once per session)
+    if (!global.stfcaUpdateChecked) {
+        global.stfcaUpdateChecked = true;
+        checkForFCAUpdate().catch(err => {
+            // Silently ignore update check errors to not block login
+        });
+    }
+
     if (utils.getType(options) === 'Function' || utils.getType(options) === 'AsyncFunction') {
         callback = options;
         options = {};

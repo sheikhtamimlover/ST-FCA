@@ -1,1 +1,10 @@
+
 node_modules
+.replit
+replit.nix
+.gitignore
+generated-icon.png
+li.js
+package-lock.json
+.git
+*.log
