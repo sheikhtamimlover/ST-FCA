@@ -306,21 +306,13 @@ api.setOptions({
 
 ## 🛠️ Projects Using This API
 
-- **[c3c](https://github.com/lequanglam/c3c)** - Customizable bot with plugins, supports Facebook & Discord
-- **[Miraiv2](https://github.com/miraiPr0ject/miraiv2)** - Simple Facebook Messenger Bot
-- **[Messer](https://github.com/mjkaufer/Messer)** - Command-line messaging for Facebook Messenger
-- **[messen](https://github.com/tomquirk/messen)** - Rapidly build Facebook Messenger apps in Node.js
-- **[Concierge](https://github.com/concierge/Concierge)** - Highly modular chat bot with built-in package manager
-- **[Marc Zuckerbot](https://github.com/bsansouci/marc-zuckerbot)** - Facebook chat bot
-- **[Botyo](https://github.com/ivkos/botyo)** - Modular bot for group chat rooms
-- **[matrix-puppet-facebook](https://github.com/matrix-hacks/matrix-puppet-facebook)** - Facebook bridge for Matrix
-- **[Miscord](https://github.com/Bjornskjald/miscord)** - Easy-to-use Facebook bridge for Discord
-- **[chat-bridge](https://github.com/rexx0520/chat-bridge)** - Messenger, Telegram and IRC chat bridge
-- **[Botium](https://github.com/codeforequity-at/botium-core)** - The Selenium for Chatbots
-- **[Messenger-CLI](https://github.com/AstroCB/Messenger-CLI)** - Command-line interface for Facebook Messenger
-- **[BotCore](https://github.com/AstroCB/BotCore)** - Tools for writing and managing Facebook Messenger bots
+### Primary Project
 
-[See more projects...](https://github.com/Donix-VN/fca-unofficial#projects-using-this-api)
+- **[ST-BOT](https://github.com/sheikhtamimlover/ST-BOT)** - Enhanced version of GoatBot V2, a powerful and customizable Facebook Messenger bot with advanced features, plugin support, and automatic updates. This is the main project that ST-FCA was designed for.
+
+### Other Use Cases
+
+ST-FCA can be used for any Facebook Messenger bot project or automation tool. If you want to create your own messenger bot or use this API for other purposes, feel free to integrate it into your project.
 
 ## 📚 Full API Documentation
 
