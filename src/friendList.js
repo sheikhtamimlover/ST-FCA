@@ -1,9 +1,19 @@
-
+/**
+ * ===========================================================
+ * 🧑‍💻 Author: Sheikh Tamim (ST | Sheikh Tamim)
+ * 🔰 Owner & Developer
+ * 🌐 GitHub: https://github.com/sheikhtamimlover
+ * 📸 Instagram: https://instagram.com/sheikh.tamim_lover
+ * -----------------------------------------------------------
+ * 🕊️ Respect the creator & give proper credits if reused.
+ * ===========================================================
+ */
 "use strict";
 
 const utils = require("../utils");
 
 module.exports = function (defaultFuncs, api, ctx) {
+  /** Developed by Sheikh Tamim | GitHub: sheikhtamimlover | Instagram: @sheikh.tamim_lover */
   return function friendList(callback) {
     let resolveFunc = function () {};
     let rejectFunc = function () {};
@@ -90,3 +100,4 @@ module.exports = function (defaultFuncs, api, ctx) {
     return returnPromise;
   };
 };
+/** Developed by Sheikh Tamim | GitHub: sheikhtamimlover | Please give credits if reused. */
