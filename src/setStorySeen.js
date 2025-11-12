@@ -14,8 +14,8 @@ var utils = require('../utils.js');
 var log = require('npmlog');
 
 module.exports = function(defaultFuncs, api, ctx) {
-  /** Developed by Sheikh Tamim | GitHub: sheikhtamimlover | Instagram: @sheikh.tamim_lover */
-  return function setStoryReaction(storyID, react, callback) {
+    /** Developed by Sheikh Tamim | GitHub: sheikhtamimlover | Instagram: @sheikh.tamim_lover */
+  return function setStorySeen(storyID, callback) {
     var resolveFunc = function () { };
     var rejectFunc = function () { };
     var returnPromise = new Promise(function (resolve, reject) {
@@ -23,11 +23,6 @@ module.exports = function(defaultFuncs, api, ctx) {
       rejectFunc = reject;
     });
 
-    if (typeof react == 'function') {
-      callback = react;
-      react = '❤️'; // Default heart reaction
-    }
-    
     if (!callback) {
       callback = function (err, data) {
         if (err) return rejectFunc(err);
@@ -39,24 +34,21 @@ module.exports = function(defaultFuncs, api, ctx) {
       return callback({ error: "storyID is required" });
     }
 
-    var reactionMap = {
-      1: '👍',
-      2: '❤️', 
-      3: '🤗',
-      4: '😆',
-      5: '😮',
-      6: '😢',
-      7: '😡',
-      'like': '👍',
-      'love': '❤️',
-      'heart': '❤️',
-      'haha': '😆',
-      'wow': '😮',
-      'sad': '😢',
-      'angry': '😡'
-    };
-
-    var reaction = reactionMap[react] || react || '❤️';
+    // Extract bucket_id from story_id if needed
+    var bucketID = storyID;
+    if (typeof storyID === 'string' && storyID.includes(':')) {
+      // Extract bucket ID from the story ID pattern
+      try {
+        var decoded = Buffer.from(storyID, 'base64').toString('utf-8');
+        var match = decoded.match(/(\d+)/);
+        if (match) {
+          bucketID = match[1];
+        }
+      } catch (e) {
+        // Fallback to using story ID as bucket ID
+        bucketID = storyID;
+      }
+    }
 
     var form = {
       av: ctx.userID,
@@ -78,23 +70,18 @@ module.exports = function(defaultFuncs, api, ctx) {
       __spin_b: "trunk",
       __spin_t: Date.now(),
       fb_api_caller_class: "RelayModern",
-      fb_api_req_friendly_name: "useStoriesSendReplyMutation",
+      fb_api_req_friendly_name: "storiesUpdateSeenStateMutation",
       variables: JSON.stringify({
         input: {
-          attribution_id_v2: `StoriesCometSuspenseRoot.react,comet.stories.viewer,unexpected,${Date.now()},356653,,;CometHomeRoot.react,comet.home,tap_tabbar,${Date.now()},109945,4748854339,,`,
-          lightweight_reaction_actions: {
-            offsets: [0],
-            reaction: reaction
-          },
-          message: reaction,
+          bucket_id: bucketID,
           story_id: storyID,
-          story_reply_type: "LIGHT_WEIGHT",
           actor_id: ctx.userID,
           client_mutation_id: String(Math.floor(Math.random() * 16) + 1)
-        }
+        },
+        scale: 1
       }),
       server_timestamps: true,
-      doc_id: "9697491553691692"
+      doc_id: "9567413276713742"
     };
 
     defaultFuncs
@@ -103,28 +90,16 @@ module.exports = function(defaultFuncs, api, ctx) {
       .then(function (resData) {
         if (resData.error) throw resData;
         
-        // Parse successful response
-        if (resData.data && resData.data.direct_message_reply) {
-          const replyData = resData.data.direct_message_reply;
-          return callback(null, {
-            success: true,
-            client_mutation_id: replyData.client_mutation_id,
-            story_id: replyData.story?.id || storyID,
-            reaction: reaction,
-            story_reactions: replyData.story?.story_card_info?.story_card_reactions?.edges || [],
-            timestamp: Date.now()
-          });
-        }
-        
         return callback(null, {
           success: true,
-          reaction: reaction,
           story_id: storyID,
-          timestamp: Date.now()
+          bucket_id: bucketID,
+          seen_time: Date.now(),
+          response: resData
         });
       })
       .catch(function (err) {
-        log.error("setStoryReaction", err);
+        log.error("setStorySeen", err);
         return callback(err);
       });
 
