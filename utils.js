@@ -2809,6 +2809,44 @@ function getPaths(obj, parentPath = []) {
     return paths;
 }
 
+function getJazoest() {
+    const time = Date.now().toString();
+    let result = "";
+    for (let i = 0; i < time.length; i++) {
+        result += time.charCodeAt(i);
+    }
+    return result;
+}
+
+function getEventTime() {
+    return Date.now();
+}
+
+function getSessionID() {
+    return Math.random().toString(36).substring(2, 15);
+}
+
+function getFormData(jar, url) {
+    const cookies = jar.getCookies(url);
+    const result = {};
+
+    cookies.forEach(cookie => {
+        const parts = cookie.toString().split(';')[0].split('=');
+        if (parts.length === 2) {
+            const key = parts[0].trim();
+            const value = parts[1].trim();
+
+            if (key === 'fb_dtsg') {
+                result.fb_dtsg = value;
+            } else if (key === 'lsd') {
+                result.lsd = value;
+            }
+        }
+    });
+
+    return result;
+}
+
 function cleanHTML(text) {
     text = text.replace(/(<br>)|(<\/?i>)|(<\/?em>)|(<\/?b>)|(!?~)|(&amp;)|(&#039;)|(&lt;)|(&gt;)|(&quot;)/g, (match) => {
         switch (match) {
@@ -2884,5 +2922,9 @@ module.exports = {
     getAppState,
     getAdminTextMessageType,
     setProxy,
-    isDMThread
+    isDMThread,
+    getJazoest,
+    getEventTime,
+    getSessionID,
+    getFormData
 };
