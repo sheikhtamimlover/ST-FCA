@@ -2878,6 +2878,10 @@ function cleanHTML(text) {
     return text;
 }
 
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 module.exports = {
     cleanHTML,
     isReadableStream: isReadableStream,
@@ -2926,5 +2930,6 @@ module.exports = {
     getJazoest,
     getEventTime,
     getSessionID,
-    getFormData
+    getFormData,
+    delay
 };

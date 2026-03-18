@@ -311,19 +311,47 @@ module.exports = function (defaultFuncs, api, ctx) {
     };
     // console.log(form)
 
-    handleLocation(msg, form, callback, () =>
-      handleSticker(msg, form, callback, () =>
-        handleAttachment(msg, form, callback, () =>
-          handleUrl(msg, form, callback, () =>
-            handleEmoji(msg, form, callback, () =>
-              handleMention(msg, form, callback, () =>
-                send(form, threadID, messageAndOTID, callback, isGroup)
+    const configSource = (global.GoatBot && global.GoatBot.config) ? global.GoatBot.config : ctx.config || {};
+    const enableTypingIndicator = typeof configSource.enableTypingIndicator !== 'undefined' ? configSource.enableTypingIndicator : ctx.config?.enableTypingIndicator;
+    const typingDuration = Number(configSource.typingDuration || ctx.config?.typingDuration || 4000);
+
+    if (enableTypingIndicator) {
+        api.sendTypingIndicator(true, threadID, () => {});
+        const originalCallback = callback;
+        callback = (err, data) => {
+            api.sendTypingIndicator(false, threadID, () => {});
+            originalCallback(err, data);
+        };
+        setTimeout(() => {
+            handleLocation(msg, form, callback, () =>
+              handleSticker(msg, form, callback, () =>
+                handleAttachment(msg, form, callback, () =>
+                  handleUrl(msg, form, callback, () =>
+                    handleEmoji(msg, form, callback, () =>
+                      handleMention(msg, form, callback, () =>
+                        sendContent(form, threadID, isSingleUser, messageAndOTID, callback)
+                      )
+                    )
+                  )
+                )
+              )
+            );
+        }, typingDuration);
+    } else {
+        handleLocation(msg, form, callback, () =>
+          handleSticker(msg, form, callback, () =>
+            handleAttachment(msg, form, callback, () =>
+              handleUrl(msg, form, callback, () =>
+                handleEmoji(msg, form, callback, () =>
+                  handleMention(msg, form, callback, () =>
+                    sendContent(form, threadID, isSingleUser, messageAndOTID, callback)
+                  )
+                )
               )
             )
           )
-        )
-      )
-    );
+        );
+    }
     return returnPromise;
   };
 };

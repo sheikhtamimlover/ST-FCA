@@ -234,10 +234,25 @@ module.exports = (defaultFuncs, api, ctx) => {
 				form["profile_xmd[" + i + "][type]"] = "p";
 			}
 		}
-		const result = await sendContent(form, threadID, isSingleUser, messageAndOTID);
-		if (callback && typeof callback === "function") {
-			callback(null, result);
+		const configSource = (global.GoatBot && global.GoatBot.config) ? global.GoatBot.config : ctx.config || {};
+		const enableTypingIndicator = typeof configSource.enableTypingIndicator !== 'undefined' ? configSource.enableTypingIndicator : ctx.config?.enableTypingIndicator;
+		const typingDuration = Number(configSource.typingDuration || ctx.config?.typingDuration || 4000);
+
+		if (enableTypingIndicator) {
+			await api.sendTypingIndicator(true, threadID, () => {});
+			await utils.delay(typingDuration);
+			const result = await sendContent(form, threadID, isSingleUser, messageAndOTID);
+			await api.sendTypingIndicator(false, threadID, () => {});
+			if (callback && typeof callback === "function") {
+				callback(null, result);
+			}
+			return result;
+		} else {
+			const result = await sendContent(form, threadID, isSingleUser, messageAndOTID);
+			if (callback && typeof callback === "function") {
+				callback(null, result);
+			}
+			return result;
 		}
-		return result;
 	};
 };

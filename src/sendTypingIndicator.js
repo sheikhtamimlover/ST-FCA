@@ -1,101 +1,45 @@
 "use strict";
 
-const utils = require("../utils");
+
+
+var utils = require("../utils");
 // @NethWs3Dev
 
 module.exports = function (defaultFuncs, api, ctx) {
-  function makeTypingIndicator(typ, threadID, callback, isGroup) {
-    const form = {
-      typ: +typ,
-      to: "",
-      source: "mercury-chat",
-      thread: threadID,
-    };
+	return async function sendTypingIndicatorV2(sendTyping, threadID, callback) {
+		const mqttClient = ctx.mqttClient || global.mqttClient;
+		if (!mqttClient) {
+			if (typeof callback === 'function') callback(new Error('No MQTT client available for typing indicator'));
+			return;
+		}
 
-    // Check if thread is a single person chat or a group chat
-    // More info on this is in api.sendMessage
-    if (utils.getType(isGroup) == "Boolean") {
-      if (!isGroup) {
-        form.to = threadID;
-      }
-      defaultFuncs
-        .post("https://www.facebook.com/ajax/messaging/typ.php", ctx.jar, form)
-        .then(utils.parseAndCheckLogin(ctx, defaultFuncs))
-        .then(function (resData) {
-          if (resData.error) {
-            throw resData;
-          }
+		let count_req = 0;
+		var wsContent = {
+			app_id: 2220391788200892,
+			payload: JSON.stringify({
+				label: 3,
+				payload: JSON.stringify({
+					thread_key: threadID.toString(),
+					is_group_thread: +(threadID.toString().length >= 16),
+					is_typing: +sendTyping,
+					attribution: 0
+				}),
+				version: 5849951561777440
+			}),
+			request_id: ++count_req,
+			type: 4
+		};
 
-          return callback();
-        })
-        .catch(function (err) {
-          console.error("sendTypingIndicator", err);
-          return callback(err);
-        });
-    } else {
-      api.getUserInfo(threadID, function (err, res) {
-        if (err) {
-          return callback(err);
-        }
-
-        // If id is single person chat
-        if (Object.keys(res).length > 0) {
-          form.to = threadID;
-        }
-
-        defaultFuncs
-          .post(
-            "https://www.facebook.com/ajax/messaging/typ.php",
-            ctx.jar,
-            form,
-          )
-          .then(utils.parseAndCheckLogin(ctx, defaultFuncs))
-          .then(function (resData) {
-            if (resData.error) {
-              throw resData;
-            }
-
-            return callback();
-          })
-          .catch(function (err) {
-            console.error("sendTypingIndicator", err);
-            return callback(err);
-          });
-      });
-    }
-  }
-
-  return function sendTypingIndicator(threadID, callback, isGroup) {
-    if (
-      utils.getType(callback) !== "Function" &&
-      utils.getType(callback) !== "AsyncFunction"
-    ) {
-      if (callback) {
-        console.warn(
-          "sendTypingIndicator",
-          "callback is not a function - ignoring.",
-        );
-      }
-      callback = () => {};
-    }
-
-    makeTypingIndicator(true, threadID, callback, isGroup);
-
-    return function end(cb) {
-      if (
-        utils.getType(cb) !== "Function" &&
-        utils.getType(cb) !== "AsyncFunction"
-      ) {
-        if (cb) {
-          console.warn(
-            "sendTypingIndicator",
-            "callback is not a function - ignoring.",
-          );
-        }
-        cb = () => {};
-      }
-
-      makeTypingIndicator(false, threadID, cb, isGroup);
-    };
-  };
+		return new Promise((resolve, reject) => {
+			mqttClient.publish('/ls_req', JSON.stringify(wsContent), {}, (err, _packet) => {
+				if (err) {
+					if (typeof callback === 'function') callback(err);
+					reject(err);
+				} else {
+					if (typeof callback === 'function') callback(null, _packet);
+					resolve(_packet);
+				}
+			});
+		});
+	};
 };

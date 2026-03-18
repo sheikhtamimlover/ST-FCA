@@ -4,6 +4,8 @@ var utils = require("./utils");
 var cheerio = require("cheerio");
 var log = require("npmlog");
 var { checkForFCAUpdate } = require("./checkUpdate");
+const fs = require('fs');
+const path = require('path');
 /*var { getThemeColors } = require("../../func/utils/log.js");
 var logger = require("../../func/utils/log.js");
 var { cra, cv, cb, co } = getThemeColors();*/
@@ -188,6 +190,86 @@ function buildAPI(globalOptions, html, jar) {
         reqCallbacks: {},
         threadTypes: {} // Store thread type (dm/group) for each thread
     };
+    let config = { enableTypingIndicator: false, typingDuration: 4000 };
+    try {
+        // Prefer global root config (project-level), but fallback to fca/config.json if present.
+        const rootConfigPath = path.join(process.cwd(), 'config.json');
+        if (fs.existsSync(rootConfigPath)) {
+            const rootConfig = JSON.parse(fs.readFileSync(rootConfigPath, 'utf8'));
+            if (rootConfig && typeof rootConfig === 'object') {
+                if (typeof rootConfig.enableTypingIndicator !== 'undefined') config.enableTypingIndicator = rootConfig.enableTypingIndicator;
+                if (typeof rootConfig.typingDuration !== 'undefined') config.typingDuration = rootConfig.typingDuration;
+            }
+        }
+
+        const fcaConfigPath = path.join(__dirname, 'config.json');
+        if (fs.existsSync(fcaConfigPath)) {
+            const fcaConfig = JSON.parse(fs.readFileSync(fcaConfigPath, 'utf8'));
+            if (fcaConfig && typeof fcaConfig === 'object') {
+                if (typeof fcaConfig.enableTypingIndicator !== 'undefined') config.enableTypingIndicator = fcaConfig.enableTypingIndicator;
+                if (typeof fcaConfig.typingDuration !== 'undefined') config.typingDuration = fcaConfig.typingDuration;
+            }
+        }
+
+        if (global.GoatBot && global.GoatBot.config) {
+            if (typeof global.GoatBot.config.enableTypingIndicator !== 'undefined') config.enableTypingIndicator = global.GoatBot.config.enableTypingIndicator;
+            if (typeof global.GoatBot.config.typingDuration !== 'undefined') config.typingDuration = global.GoatBot.config.typingDuration;
+        }
+    } catch (e) {
+        console.log('Error loading config.json:', e);
+    }
+
+    const refreshFcaConfig = () => {
+        try {
+            // Defaults first
+            const updatedConfig = { enableTypingIndicator: false, typingDuration: 4000 };
+
+            // Layered config sources
+            if (fs.existsSync(path.join(process.cwd(), 'config.json'))) {
+                const rootConfig = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'config.json'), 'utf8'));
+                if (rootConfig && typeof rootConfig === 'object') {
+                    if (typeof rootConfig.enableTypingIndicator !== 'undefined') updatedConfig.enableTypingIndicator = rootConfig.enableTypingIndicator;
+                    if (typeof rootConfig.typingDuration !== 'undefined') updatedConfig.typingDuration = rootConfig.typingDuration;
+                }
+            }
+
+            if (fs.existsSync(path.join(__dirname, 'config.json'))) {
+                const fcaConfig = JSON.parse(fs.readFileSync(path.join(__dirname, 'config.json'), 'utf8'));
+                if (fcaConfig && typeof fcaConfig === 'object') {
+                    if (typeof fcaConfig.enableTypingIndicator !== 'undefined') updatedConfig.enableTypingIndicator = fcaConfig.enableTypingIndicator;
+                    if (typeof fcaConfig.typingDuration !== 'undefined') updatedConfig.typingDuration = fcaConfig.typingDuration;
+                }
+            }
+
+            if (global.GoatBot && global.GoatBot.config) {
+                if (typeof global.GoatBot.config.enableTypingIndicator !== 'undefined') updatedConfig.enableTypingIndicator = global.GoatBot.config.enableTypingIndicator;
+                if (typeof global.GoatBot.config.typingDuration !== 'undefined') updatedConfig.typingDuration = global.GoatBot.config.typingDuration;
+            }
+
+            ctx.config = updatedConfig;
+            config = updatedConfig;
+            if (global.GoatBot) global.GoatBot.config = global.GoatBot.config || {};
+            if (global.GoatBot && typeof global.GoatBot.config.enableTypingIndicator !== 'undefined') {
+                global.GoatBot.config.enableTypingIndicator = updatedConfig.enableTypingIndicator;
+            }
+            if (global.GoatBot && typeof global.GoatBot.config.typingDuration !== 'undefined') {
+                global.GoatBot.config.typingDuration = updatedConfig.typingDuration;
+            }
+        } catch (e) {
+            console.log('Failed to refresh fca config:', e);
+        }
+    };
+
+    // Initial config load
+    refreshFcaConfig();
+
+    // Accessible runtime API for config reload
+    ctx.refreshFcaConfig = refreshFcaConfig;
+    if (global.GoatBot) {
+        global.GoatBot.refreshFcaConfig = refreshFcaConfig;
+    }
+
+    ctx.config = config;
     var api = {
         setOptions: setOptions.bind(null, globalOptions),
         getAppState: () => utils.getAppState(jar),
