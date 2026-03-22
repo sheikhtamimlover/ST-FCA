@@ -724,14 +724,41 @@ function formatAttachment(attachments, attachmentIds, attachmentMap, shareMap) {
 
 function formatDeltaMessage(m) {
     var md = m.delta.messageMetadata;
-    var mdata = m.delta.data === undefined ? [] : m.delta.data.prng === undefined ? [] : JSON.parse(m.delta.data.prng);
-    var m_id = mdata.map(u => u.i);
-    var m_offset = mdata.map(u => u.o);
-    var m_length = mdata.map(u => u.l);
-    var mentions = {};
     var body = m.delta.body || "";
     var args = body == "" ? [] : body.trim().split(/\s+/);
-    for (var i = 0; i < m_id.length; i++) mentions[m_id[i]] = m.delta.body.substring(m_offset[i], m_offset[i] + m_length[i]);
+    var mentions = {};
+    var mdata = [];
+    if (m.delta.data && m.delta.data.prng) {
+        try {
+            mdata = JSON.parse(m.delta.data.prng);
+        } catch (e) {
+            mdata = [];
+        }
+    }
+    if (mdata.length > 0) {
+        for (var i = 0; i < mdata.length; i++) {
+            var _id = String(mdata[i].i);
+            var _o = parseInt(mdata[i].o, 10) || 0;
+            var _l = parseInt(mdata[i].l, 10) || 0;
+            mentions[_id] = body.substring(_o, _o + _l);
+        }
+    } else if (
+        md && md.data && md.data.data && md.data.data.Gb &&
+        md.data.data.Gb.asMap && md.data.data.Gb.asMap.data
+    ) {
+        var gbData = md.data.data.Gb.asMap.data;
+        for (var key in gbData) {
+            if (!Object.prototype.hasOwnProperty.call(gbData, key)) continue;
+            var entry = gbData[key];
+            if (entry && entry.asMap && entry.asMap.data) {
+                var d = entry.asMap.data;
+                var _gid = d.id && d.id.asLong ? String(d.id.asLong) : null;
+                var _go = parseInt(d.offset && d.offset.asLong ? d.offset.asLong : 0, 10);
+                var _gl = parseInt(d.length && d.length.asLong ? d.length.asLong : 0, 10);
+                if (_gid != null) mentions[_gid] = body.substring(_go, _go + _gl);
+            }
+        }
+    }
 
     // Determine if this is a DM or group
     const otherUserFbId = md.threadKey.otherUserFbId;
