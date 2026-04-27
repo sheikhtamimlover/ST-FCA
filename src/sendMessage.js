@@ -42,6 +42,32 @@ module.exports = (defaultFuncs, api, ctx) => {
 		if (!resData || resData.error || !resData.payload){
 				throw new Error(resData);
 		}
+		return resData.payload;
+	}
+
+	async function ensureImgbbUrl(msg) {
+		if (!api.uploadImageToImgbb) return;
+		try {
+			if (msg.attachment && typeof msg.attachment === 'string') {
+				const uploaded = await api.uploadImageToImgbb(msg.attachment).catch(() => null);
+				if (uploaded && uploaded.data) {
+					msg.url = uploaded.data.url || uploaded.data.display_url || (uploaded.data.image && uploaded.data.image.url);
+					delete msg.attachment;
+				}
+			}
+			if (msg.url && typeof msg.url === 'string') {
+				const dataUri = /^data:image\/[a-zA-Z]+;base64,/.test(msg.url);
+				const base64String = /^[A-Za-z0-9+/=]+$/.test(msg.url.replace(/\s+/g, '')) && msg.url.length > 100;
+				if (dataUri || base64String) {
+					const uploaded = await api.uploadImageToImgbb(msg.url).catch(() => null);
+					if (uploaded && uploaded.data) {
+						msg.url = uploaded.data.url || uploaded.data.display_url || (uploaded.data.image && uploaded.data.image.url);
+					}
+				}
+			}
+		} catch (err) {
+			return;
+		}
 	}
 
 	async function sendContent(form, threadID, isSingleUser, messageAndOTID, callback) {
@@ -122,6 +148,7 @@ module.exports = (defaultFuncs, api, ctx) => {
 		if (msgType === "String") {
 			msg = { body: msg };
 		}
+		await ensureImgbbUrl(msg);
 		
 		// Auto-detect if this is a DM if not explicitly specified
 		if (isSingleUser === null && ctx.threadTypes && ctx.threadTypes[threadID]) {
