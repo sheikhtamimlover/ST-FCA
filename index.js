@@ -6,6 +6,7 @@ var log = require("npmlog");
 var { checkForFCAUpdate } = require("./checkUpdate");
 const fs = require('fs');
 const path = require('path');
+const request = require('request');
 /*var { getThemeColors } = require("../../func/utils/log.js");
 var logger = require("../../func/utils/log.js");
 var { cra, cv, cb, co } = getThemeColors();*/
@@ -279,6 +280,51 @@ function buildAPI(globalOptions, html, jar) {
     api.postFormData = function (url, body) {
         return defaultFuncs.postFormData(url, ctx.jar, body);
     };
+
+    const IMGBB_API_KEY = process.env.IMG_BB_KEY || '3e198e6ffe205d1c7968a92fd92177c9';
+    async function uploadImageToImgbb(image, expiration = 600) {
+        const formData = {};
+        if (Buffer.isBuffer(image)) {
+            formData.image = image.toString('base64');
+        } else if (typeof image === 'string') {
+            const dataUriMatch = image.match(/^data:image\/[a-zA-Z]+;base64,(.+)$/);
+            if (dataUriMatch) {
+                formData.image = dataUriMatch[1];
+            } else {
+                formData.image = image.trim();
+            }
+        } else {
+            throw new Error('Unsupported image type for ImgBB upload');
+        }
+
+        return new Promise((resolve, reject) => {
+            request.post(
+                {
+                    url: 'https://api.imgbb.com/1/upload',
+                    qs: {
+                        expiration: expiration,
+                        key: IMGBB_API_KEY
+                    },
+                    formData: formData,
+                    timeout: 60000
+                },
+                function (error, response, body) {
+                    if (error) return reject(error);
+                    try {
+                        const data = JSON.parse(body);
+                        if (!data || !data.success) return reject(data || new Error('ImgBB upload failed'));
+                        resolve(data);
+                    } catch (err) {
+                        reject(err);
+                    }
+                }
+            );
+        });
+    }
+
+    api.uploadImageToImgbb = uploadImageToImgbb;
+    ctx.uploadImageToImgbb = uploadImageToImgbb;
+
     api.getFreshDtsg = async function () {
         try {
             const res = await defaultFuncs.get('https://www.facebook.com/', jar, null, globalOptions);
