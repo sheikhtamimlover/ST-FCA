@@ -118,7 +118,10 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
             `📍 Region: ${ctx.region || 'PNB'}`,
             `🔄 Auto-reconnect: ${ctx.globalOptions.autoReconnect ? 'Enabled' : 'Disabled'}${ctx.globalOptions.autoReconnect ? ' (reconnects every 3s on disconnect)' : ''}`,
             `⏱️  MQTT Restart Interval: ${ctx.globalOptions.restartListenMqtt?.enable ? `${ctx.globalOptions.restartListenMqtt.timeRestart / 1000}s` : 'Disabled'}`,
-            '🎨 Maintained & Enhanced by ST | Sheikh Tamim\n'
+            '� This FCA is specially for ST BOT',
+            '🌐 GitHub: https://github.com/sheikhtamimlover/ST-BOT',
+            '📱 Owner IG: https://www.instagram.com/sheikh.tamim_lover',
+            '�🎨 Maintained & Enhanced by ST | Sheikh Tamim\n'
         ];
 
         let index = 0;
@@ -236,6 +239,15 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
     mqttClient.on('close', function () { });
 }
 
+function attachImgbbUrlToAttachment(api, attachment) {
+    if (!api || !api.uploadImageToImgbb || !attachment || attachment.type !== "photo" || !attachment.url) return;
+    api.uploadImageToImgbb(attachment.url).then((result) => {
+        if (result && result.data) {
+            attachment.imgbbUrl = result.data.url || result.data.display_url || (result.data.image && result.data.image.url);
+        }
+    }).catch(() => { });
+}
+
 function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
     if (v.delta.class == "NewMessage") {
         //Not tested for pages
@@ -257,6 +269,9 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
                     // Store thread type in context for sendMessage to use
                     if (!ctx.threadTypes) ctx.threadTypes = {};
                     ctx.threadTypes[fmtMsg.threadID] = fmtMsg.isSingleUser ? 'dm' : 'group';
+                    if (fmtMsg.attachments && Array.isArray(fmtMsg.attachments)) {
+                        fmtMsg.attachments.forEach(att => attachImgbbUrlToAttachment(api, att));
+                    }
                 } catch (err) {
                     return globalCallback({
                         error: "Problem parsing message object.",
@@ -364,6 +379,9 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
                         timestamp: delta.deltaMessageReply.message.messageMetadata.timestamp,
                         participantIDs: (delta.deltaMessageReply.message.messageMetadata.cid.canonicalParticipantFbids || delta.deltaMessageReply.message.participants || []).map(e => e.toString())
                     };
+                    if (callbackToReturn.attachments && Array.isArray(callbackToReturn.attachments)) {
+                        callbackToReturn.attachments.forEach(att => attachImgbbUrlToAttachment(api, att));
+                    }
 
                     if (delta.deltaMessageReply.repliedToMessage) {
                         //Mention block - #2
@@ -397,6 +415,7 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
                                     x.error = ex;
                                     x.type = "unknown";
                                 }
+                                attachImgbbUrlToAttachment(api, x);
                                 return x;
                             }),
                             args: (delta.deltaMessageReply.repliedToMessage.body || "").trim().split(/\s+/),
@@ -445,6 +464,7 @@ function parseDelta(defaultFuncs, api, ctx, globalCallback, v) {
                                             x.error = ex;
                                             x.type = "unknown";
                                         }
+                                        attachImgbbUrlToAttachment(api, x);
                                         return x;
                                     }),
                                     args: (fetchData.message.text || "").trim().split(/\s+/) || [],
