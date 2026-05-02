@@ -72,13 +72,6 @@ function stopMqttSpinner() {
 function printMqttBanner(region, autoReconnect) {
     stopMqttSpinner();
 
-    // W = inner column width (between the two ║ borders, excluding the ║ chars themselves).
-    // Emoji are double-width in terminals — each one occupies 2 columns but has
-    // .length === 1, so we add +1 per emoji when computing the visible column width
-    // so the padding math comes out right.
-    var W = 50;
-
-    var border    = C.bold + C.bCyan;
     var titleClr  = C.bold + C.bGreen;
     var labelClr  = C.bold + C.bWhite;
     var valClr    = C.bYellow;
@@ -86,39 +79,25 @@ function printMqttBanner(region, autoReconnect) {
     var urlClr    = C.bBlue;
     var rst       = C.reset;
 
-    var regionVal = (region ).toUpperCase();
+    var regionVal = (region || '').toUpperCase();
     var reconnTxt = autoReconnect ? 'Enabled (3s)' : 'Disabled';
     var reconnClr = autoReconnect ? C.bGreen : C.bRed;
     var reconnVal = reconnClr + reconnTxt + rst;
 
-    // Each row: [ ansiText, terminalColumnsUsed ]
-    // terminalColumnsUsed = printable chars + 1 extra per emoji (double-width).
     var rows = [
-        // ✅ = +1 extra col
-        [ titleClr + '  ✅  ST-FCA MQTT Connected'           + rst,  27 ],
-        [ '',                                                          0  ],
-        // 📍 = +1 extra col
-        [ labelClr + '  📍  Region         ' + rst + valClr + regionVal + rst,  22 + regionVal.length ],
-        // 🔄 = +1 extra col
-        [ labelClr + '  🔄  Auto-reconnect  ' + rst + reconnVal,          23 + reconnTxt.length ],
-        // 🌐 = +1 extra col
-        [ urlClr   + '  🌐  github.com/sheikhtamimlover/ST-BOT' + rst,  43 ],
-        [ '',                                                          0  ],
-        // 💎 = +1 extra col
-        [ accentClr + '  💎  Maintained by ST | Sheikh Tamim'  + rst,  39 ],
+        titleClr + '  ✅  ST-FCA MQTT Connected' + rst,
+        '',
+        labelClr + '  📍  Region         ' + rst + valClr + regionVal + rst,
+        labelClr + '  🔄  Auto-reconnect  ' + rst + reconnVal,
+        urlClr   + '  🌐  github.com/sheikhtamimlover/ST-BOT' + rst,
+        '',
+        accentClr + '  💎  Author  ST | Sheikh Tamim' + rst
     ];
 
-    var tl = border + '╔' + '═'.repeat(W + 2) + '╗' + rst;
-    var bl = border + '╚' + '═'.repeat(W + 2) + '╝' + rst;
-
     process.stdout.write('\n');
-    console.log(tl);
-    rows.forEach(function (r) {
-        var text = r[0], cols = r[1];
-        var pad = Math.max(0, W - cols);
-        console.log(border + '║ ' + rst + text + ' '.repeat(pad) + ' ' + border + '║' + rst);
+    rows.forEach(function (line) {
+        console.log(line);
     });
-    console.log(bl);
     process.stdout.write('\n');
 }
 
