@@ -1,6 +1,6 @@
 {
   "name": "stfca",
-  "version": "1.0.27",
+  "version": "1.1.27",
   "description": "Unofficial Facebook Chat API for Node.js with Auto-Update System - Enhanced by ST | Sheikh Tamim",
   "main": "index.js",
   "files": [
@@ -10,7 +10,7 @@
     "checkUpdate.js"
   ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node bot.js",
     "start": "node index.js"
   },
   "repository": {
@@ -61,16 +61,15 @@
     "cheerio": "^1.0.0-rc.10",
     "duplexify": "^4.1.3",
     "gradient-string": "^2.0.2",
-    "https-proxy-agent": "^4.0.0",
-    "mqtt": "^4.3.8",
+    "https-proxy-agent": "^7.0.6",
+    "mime": "^3.0.0",
+    "mqtt": "^5.10.1",
     "npmlog": "^1.2.0",
-    "request": "^2.53.0",
-    "sequelize": "^6.37.6",
-    "sqlite3": "^5.1.7",
+    "request": "^2.88.2",
     "totp-generator": "^1.0.0",
     "ws": "^8.18.1"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=16.0.0"
   }
 }
