@@ -1,285 +1,299 @@
 "use strict";
 
 const utils = require('../utils');
-// @NethWs3Dev
+const log = require('npmlog');
 
 const allowedProperties = {
-	attachment: true,
-	url: true,
-	sticker: true,
-	emoji: true,
-	emojiSize: true,
-	body: true,
-	mentions: true,
-	location: true,
+    attachment: true,
+    url: true,
+    sticker: true,
+    emoji: true,
+    emojiSize: true,
+    body: true,
+    mentions: true,
+    location: true,
+    replyToMessage: true,
+    forwardAttachmentIds: true,
 };
 
-module.exports = (defaultFuncs, api, ctx) => {
-	async function uploadAttachment(attachments) {
-		var uploads = [];
-		for (var i = 0; i < attachments.length; i++) {
-		 if (!utils.isReadableStream(attachments[i])) {
-				throw new Error("Attachment should be a readable stream and not " + utils.getType(attachments[i]) + ".");
-		 }
-		 const oksir = await defaultFuncs.postFormData("https://upload.facebook.com/ajax/mercury/upload.php", ctx.jar,{
-			 upload_1024: attachments[i],
-			 voice_clip: "true"
-		 }, {}).then(utils.parseAndCheckLogin(ctx, defaultFuncs));
-		 if (oksir.error) {
-			 throw new Error(resData);
-		 }
-		 uploads.push(oksir.payload.metadata[0]);
-		}
-		return uploads;
-	}
+const EMOJI_SIZES = { small: 1, medium: 2, large: 3 };
 
-	async function getUrl(url) {
-		const resData = await defaultFuncs.post("https://www.facebook.com/message_share_attachment/fromURI/", ctx.jar, {
-			image_height: 960,
-			image_width: 960,
-			uri: url
-		}).then(utils.parseAndCheckLogin(ctx, defaultFuncs));
-		if (!resData || resData.error || !resData.payload){
-				throw new Error(resData);
-		}
-		return resData.payload;
-	}
+function toEmojiSize(size) {
+    if (typeof size === "number" && !isNaN(size)) return Math.min(3, Math.max(1, size));
+    if (typeof size === "string" && size in EMOJI_SIZES) return EMOJI_SIZES[size];
+    return 1;
+}
 
-	async function ensureImgbbUrl(msg) {
-		if (!api.uploadImageToImgbb) return;
-		try {
-			if (msg.attachment && typeof msg.attachment === 'string') {
-				const uploaded = await api.uploadImageToImgbb(msg.attachment).catch(() => null);
-				if (uploaded && uploaded.data) {
-					msg.url = uploaded.data.url || uploaded.data.display_url || (uploaded.data.image && uploaded.data.image.url);
-					delete msg.attachment;
-				}
-			}
-			if (msg.url && typeof msg.url === 'string') {
-				const dataUri = /^data:image\/[a-zA-Z]+;base64,/.test(msg.url);
-				const base64String = /^[A-Za-z0-9+/=]+$/.test(msg.url.replace(/\s+/g, '')) && msg.url.length > 100;
-				if (dataUri || base64String) {
-					const uploaded = await api.uploadImageToImgbb(msg.url).catch(() => null);
-					if (uploaded && uploaded.data) {
-						msg.url = uploaded.data.url || uploaded.data.display_url || (uploaded.data.image && uploaded.data.image.url);
-					}
-				}
-			}
-		} catch (err) {
-			return;
-		}
-	}
+function hasLinks(text) {
+    return /(https?:\/\/|www\.|t\.me\/|fb\.me\/|youtu\.be\/|facebook\.com\/|youtube\.com\/)/i.test(text);
+}
 
-	async function sendContent(form, threadID, isSingleUser, messageAndOTID, callback) {
-		// There are three cases here:
-		// 1. threadID is of type array, where we're starting a new group chat with users
-		//    specified in the array.
-		// 2. User is sending a message to a specific user.
-		// 3. No additional form params and the message goes to an existing group chat.
-		if (utils.getType(threadID) === "Array") {
-			for (var i = 0; i < threadID.length; i++) {
-				form["specific_to_list[" + i + "]"] = "fbid:" + threadID[i];
-			}
-			form["specific_to_list[" + threadID.length + "]"] = "fbid:" + ctx.userID;
-			form["client_thread_id"] = "root:" + messageAndOTID;
-			utils.log("sendMessage", "Sending message to multiple users: " + threadID);
-		} else {
-			const threadIDStr = threadID.toString();
-			// Check if it's a DM: doesn't start with numeric group ID pattern or explicitly marked as single user
-			const isDM = !threadIDStr.match(/^\d{15,}$/) || isSingleUser === true;
-			
-			// This means that threadID is the id of a user, and the chat
-			// is a single person chat
-			if (isDM) {
-				form["specific_to_list[0]"] = "fbid:" + threadID;
-				form["specific_to_list[1]"] = "fbid:" + ctx.userID;
-				form["other_user_fbid"] = threadID;
-			} else {
-				form["thread_fbid"] = threadID;
-			}
-		}
+function buildMentionData(msg, baseBody) {
+    if (!Array.isArray(msg.mentions) || !msg.mentions.length) return null;
+    var ids = [], offsets = [], lengths = [], types = [];
+    var cursor = 0;
+    for (var i = 0; i < msg.mentions.length; i++) {
+        var mention = msg.mentions[i];
+        var rawTag = String(mention.tag || "");
+        var displayName = rawTag.replace(/^@+/, "");
+        var start = Number.isInteger(mention.fromIndex) ? mention.fromIndex : cursor;
+        var index = baseBody.indexOf(rawTag, start);
+        var adjustment = 0;
+        if (index === -1) {
+            index = baseBody.indexOf(displayName, start);
+        } else {
+            adjustment = rawTag.length - displayName.length;
+        }
+        if (index < 0) { index = 0; adjustment = 0; }
+        var offset = index + adjustment;
+        ids.push(String(mention.id || 0));
+        offsets.push(offset);
+        lengths.push(displayName.length);
+        types.push("p");
+        cursor = offset + displayName.length;
+    }
+    return {
+        mention_ids: ids.join(","),
+        mention_offsets: offsets.join(","),
+        mention_lengths: lengths.join(","),
+        mention_types: types.join(",")
+    };
+}
 
-		if (ctx.globalOptions.pageID) {
-			form["author"] = "fbid:" + ctx.globalOptions.pageID;
-			form["specific_to_list[1]"] = "fbid:" + ctx.globalOptions.pageID;
-			form["creator_info[creatorID]"] = ctx.userID;
-			form["creator_info[creatorType]"] = "direct_admin";
-			form["creator_info[labelType]"] = "sent_message";
-			form["creator_info[pageID]"] = ctx.globalOptions.pageID;
-			form["request_user_id"] = ctx.globalOptions.pageID;
-			form["creator_info[profileURI]"] =
-				"https://www.facebook.com/profile.php?id=" + ctx.userID;
-		}
+function extractIdsFromPayload(payload) {
+    var messageID = null, threadID = null;
+    function walk(node) {
+        if (!Array.isArray(node)) return;
+        if (node[0] === 5 && (node[1] === "replaceOptimsiticMessage" || node[1] === "replaceOptimisticMessage")) {
+            messageID = String(node[3]);
+        }
+        if (node[0] === 5 && node[1] === "writeCTAIdToThreadsTable") {
+            var candidate = node[2];
+            if (Array.isArray(candidate) && candidate[0] === 19) threadID = String(candidate[1]);
+        }
+        for (var i = 0; i < node.length; i++) walk(node[i]);
+    }
+    try { walk(payload && payload.step); } catch (_) { }
+    return { threadID: threadID, messageID: messageID };
+}
 
-		const resData = await defaultFuncs.post("https://www.facebook.com/messaging/send/", ctx.jar, form).then(utils.parseAndCheckLogin(ctx, defaultFuncs));
-		if (!resData) {
-			throw new Error("Send message failed.");
-		}
-		if (resData.error) {
-			if (resData.error === 1545012) {
-				utils.warn("sendMessage", "Got error 1545012. This might mean that you're not part of the conversation " + threadID);
-				throw new Error(`Cannot send message to thread ${threadID}: Bot is not part of this conversation (Error 1545012)`);
-			}
-			throw new Error(resData);
-		}
-		const messageInfo = resData.payload.actions.reduce((p, v) => {
-				return { threadID: v.thread_fbid, messageID: v.message_id, timestamp: v.timestamp } || p;
-		}, null);
-		return messageInfo;
-	}
+function publishLsRequestWithAck(mqttClient, content, requestId, timeout) {
+    timeout = timeout || 15000;
+    return new Promise(function (resolve, reject) {
+        var timer = setTimeout(function () {
+            mqttClient.removeListener('message', onMessage);
+            reject(new Error('MQTT sendMessage timed out'));
+        }, timeout);
 
-	return async (msg, threadID, callback, replyToMessage, isSingleUser = null) => {
-		// Handle different parameter patterns for backward compatibility
-		if (typeof callback === "string" || (callback && typeof callback === "object")) {
-			// callback is actually replyToMessage, shift parameters
-			isSingleUser = replyToMessage;
-			replyToMessage = callback;
-			callback = function() {};
-		} else if (typeof callback !== "function") {
-			callback = function() {};
-		}
+        function onMessage(topic, message) {
+            if (topic !== '/ls_resp') return;
+            try {
+                var data = JSON.parse(message.toString());
+                if (String(data.request_id) === String(requestId)) {
+                    clearTimeout(timer);
+                    mqttClient.removeListener('message', onMessage);
+                    var extracted = extractIdsFromPayload(
+                        data.payload ? JSON.parse(data.payload) : {}
+                    );
+                    resolve({
+                        threadID: extracted.threadID,
+                        messageID: extracted.messageID
+                    });
+                }
+            } catch (_) { }
+        }
 
-		let msgType = utils.getType(msg);
-		let threadIDType = utils.getType(threadID);
-		let messageIDType = utils.getType(replyToMessage);
-		if (msgType !== "String" && msgType !== "Object") throw new Error("Message should be of type string or object and not " + msgType + ".");
-		if (threadIDType !== "Array" && threadIDType !== "Number" && threadIDType !== "String") throw new Error("ThreadID should be of type number, string, or array and not " + threadIDType + ".");
-		if (replyToMessage && messageIDType !== 'String' && messageIDType !== 'string') throw new Error("MessageID should be of type string and not " + messageIDType + ".");
-		if (msgType === "String") {
-			msg = { body: msg };
-		}
-		await ensureImgbbUrl(msg);
-		
-		// Auto-detect if this is a DM if not explicitly specified
-		if (isSingleUser === null && ctx.threadTypes && ctx.threadTypes[threadID]) {
-			isSingleUser = ctx.threadTypes[threadID] === 'dm';
-		} else if (isSingleUser === null) {
-			// Fallback: check if threadID looks like a user ID (15 digits) vs group ID (longer)
-			const threadIDStr = threadID.toString();
-			isSingleUser = threadIDStr.length === 15 || !threadIDStr.match(/^\d{16,}$/);
-		}
-		let disallowedProperties = Object.keys(msg).filter(prop => !allowedProperties[prop]);
-		if (disallowedProperties.length > 0) {
-			throw new Error("Dissallowed props: `" + disallowedProperties.join(", ") + "`");
-		}
-		let messageAndOTID = utils.generateOfflineThreadingID();
-		let form = {
-			client: "mercury",
-			action_type: "ma-type:user-generated-message",
-			author: "fbid:" + ctx.userID,
-			timestamp: Date.now(),
-			timestamp_absolute: "Today",
-			timestamp_relative: utils.generateTimestampRelative(),
-			timestamp_time_passed: "0",
-			is_unread: false,
-			is_cleared: false,
-			is_forward: false,
-			is_filtered_content: false,
-			is_filtered_content_bh: false,
-			is_filtered_content_account: false,
-			is_filtered_content_quasar: false,
-			is_filtered_content_invalid_app: false,
-			is_spoof_warning: false,
-			source: "source:chat:web",
-			"source_tags[0]": "source:chat",
-			...(msg.body && {
-					body: msg.body
-			}),
-			html_body: false,
-			ui_push_phase: "V3",
-			status: "0",
-			offline_threading_id: messageAndOTID,
-			message_id: messageAndOTID,
-			threading_id: utils.generateThreadingID(ctx.clientID),
-			"ephemeral_ttl_mode:": "0",
-			manual_retry_cnt: "0",
-			has_attachment: !!(msg.attachment || msg.url || msg.sticker),
-			signatureID: utils.getSignatureID(),
-			...(replyToMessage && {
-					replied_to_message_id: replyToMessage
-			})
-		};
+        mqttClient.on('message', onMessage);
+        mqttClient.publish('/ls_req', JSON.stringify(content), { qos: 1 }, function (err) {
+            if (err) {
+                clearTimeout(timer);
+                mqttClient.removeListener('message', onMessage);
+                reject(err);
+            }
+        });
+    });
+}
 
-		if (msg.location) {
-			if (!msg.location.latitude || !msg.location.longitude) throw new Error("location property needs both latitude and longitude");
-			form["location_attachment[coordinates][latitude]"] = msg.location.latitude;
-			form["location_attachment[coordinates][longitude]"] = msg.location.longitude;
-			form["location_attachment[is_current_location]"] = !!msg.location.current;
-		}
-		if (msg.sticker) {
-			form["sticker_id"] = msg.sticker;
-		}
-		if (msg.attachment) {
-			form.image_ids = [];
-			form.gif_ids = [];
-			form.file_ids = [];
-			form.video_ids = [];
-			form.audio_ids = [];
-			if (utils.getType(msg.attachment) !== "Array") {
-				msg.attachment = [msg.attachment];
-			}
-			const files = await uploadAttachment(msg.attachment);
-			files.forEach(file => {
-					const type = Object.keys(file)[0];
-					form["" + type + "s"].push(file[type]);
-			}); 
-		}
-		if (msg.url) {
-			form["shareable_attachment[share_type]"] = "100";
-			const params = await getUrl(msg.url);
-			form["shareable_attachment[share_params]"] = params;
-		}
-		if (msg.emoji) {
-			if (!msg.emojiSize) {
-				msg.emojiSize = "medium";
-			}
-			if (msg.emojiSize !== "small" && msg.emojiSize !== "medium" && msg.emojiSize !== "large") {
-				throw new Error("emojiSize property is invalid");
-			}
-			if (!form.body) {
-				throw new Error("body is not empty");
-			}
-			form.body = msg.emoji;
-			form["tags[0]"] = "hot_emoji_size:" + msg.emojiSize;
-		} 
-		if (msg.mentions) {
-			for (let i = 0; i < msg.mentions.length; i++) {
-				const mention = msg.mentions[i];
-				const tag = mention.tag;
-				if (typeof tag !== "string") {
-					throw new Error("Mention tags must be strings.");
-				}
-				const offset = msg.body.indexOf(tag, mention.fromIndex || 0);
-				if (offset < 0) utils.warn("handleMention", 'Mention for "' + tag + '" not found in message string.');
-				if (!mention.id) utils.warn("handleMention", "Mention id should be non-null.");
-				const id = mention.id || 0;
-				const emptyChar = '\u200E';
-				form["body"] = emptyChar + msg.body;
-				form["profile_xmd[" + i + "][offset]"] = offset + 1;
-				form["profile_xmd[" + i + "][length]"] = tag.length;
-				form["profile_xmd[" + i + "][id]"] = id;
-				form["profile_xmd[" + i + "][type]"] = "p";
-			}
-		}
-		const configSource = (global.GoatBot && global.GoatBot.config) ? global.GoatBot.config : ctx.config || {};
-		const enableTypingIndicator = typeof configSource.enableTypingIndicator !== 'undefined' ? configSource.enableTypingIndicator : ctx.config?.enableTypingIndicator;
-		const typingDuration = Number(configSource.typingDuration || ctx.config?.typingDuration || 4000);
+module.exports = function (defaultFuncs, api, ctx) {
+    var uploadAttachmentFn = require('./uploadAttachment')(defaultFuncs, api, ctx);
 
-		if (enableTypingIndicator) {
-			await api.sendTypingIndicator(true, threadID, () => {});
-			await utils.delay(typingDuration);
-			const result = await sendContent(form, threadID, isSingleUser, messageAndOTID);
-			await api.sendTypingIndicator(false, threadID, () => {});
-			if (callback && typeof callback === "function") {
-				callback(null, result);
-			}
-			return result;
-		} else {
-			const result = await sendContent(form, threadID, isSingleUser, messageAndOTID);
-			if (callback && typeof callback === "function") {
-				callback(null, result);
-			}
-			return result;
-		}
-	};
+    async function uploadAttachments(attachments) {
+        if (!Array.isArray(attachments)) attachments = [attachments];
+        return await uploadAttachmentFn(attachments);
+    }
+
+    async function sendViaMqtt(msg, threadID, replyToMessage) {
+        var mqttClient = ctx.mqttClient || global.mqttClient;
+        if (!mqttClient) throw new Error('MQTT client not available');
+
+        var baseBody = msg.body != null ? String(msg.body) : "";
+        var requestId = Math.floor(100 + Math.random() * 900);
+        var epoch = (BigInt(Date.now()) << 22n).toString();
+
+        var payload0 = {
+            thread_id: String(threadID),
+            otid: utils.generateOfflineThreadingID(),
+            source: 2097153,
+            send_type: 1,
+            sync_group: 1,
+            mark_thread_read: 1,
+            text: baseBody === "" ? null : baseBody,
+            initiating_source: 0,
+            skip_url_preview_gen: 0,
+            text_has_links: hasLinks(baseBody) ? 1 : 0,
+            multitab_env: 0,
+            metadata_dataclass: JSON.stringify({ media_accessibility_metadata: { alt_text: null } })
+        };
+
+        var mentionData = buildMentionData(msg, baseBody);
+        if (mentionData) payload0.mention_data = mentionData;
+
+        if (msg.sticker) {
+            payload0.send_type = 2;
+            payload0.sticker_id = msg.sticker;
+        }
+
+        if (msg.emoji) {
+            payload0.send_type = 1;
+            payload0.text = msg.emoji;
+            payload0.hot_emoji_size = toEmojiSize(msg.emojiSize);
+        }
+
+        if (msg.location && msg.location.latitude != null && msg.location.longitude != null) {
+            payload0.send_type = 1;
+            payload0.location_data = {
+                coordinates: { latitude: msg.location.latitude, longitude: msg.location.longitude },
+                is_current_location: Boolean(msg.location.current),
+                is_live_location: Boolean(msg.location.live)
+            };
+        }
+
+        var effectiveReplyTo = replyToMessage || msg.replyToMessage;
+        if (effectiveReplyTo) {
+            payload0.reply_metadata = {
+                reply_source_id: effectiveReplyTo,
+                reply_source_type: 1,
+                reply_type: 0
+            };
+        }
+
+        if (msg.attachment) {
+            payload0.send_type = 3;
+            if (payload0.text === "") payload0.text = null;
+            payload0.attachment_fbids = [];
+
+            var list = Array.isArray(msg.attachment) ? msg.attachment : [msg.attachment];
+            var preuploaded = [];
+            var toUpload = [];
+
+            for (var i = 0; i < list.length; i++) {
+                var item = list[i];
+                if (Array.isArray(item) && item.length >= 2 && typeof item[0] === "string") {
+                    preuploaded.push(String(item[1]));
+                } else if (utils.isReadableStream(item)) {
+                    toUpload.push(item);
+                }
+            }
+
+            if (preuploaded.length) {
+                payload0.attachment_fbids = payload0.attachment_fbids.concat(preuploaded);
+            }
+
+            if (Array.isArray(msg.forwardAttachmentIds) && msg.forwardAttachmentIds.length) {
+                payload0.attachment_fbids = payload0.attachment_fbids.concat(msg.forwardAttachmentIds.map(String));
+            }
+
+            if (toUpload.length) {
+                var uploaded = await uploadAttachments(toUpload);
+                for (var f = 0; f < uploaded.length; f++) {
+                    var key = Object.keys(uploaded[f])[0];
+                    payload0.attachment_fbids.push(String(uploaded[f][key]));
+                }
+            }
+        }
+
+        var content = {
+            app_id: "2220391788200892",
+            payload: {
+                tasks: [
+                    {
+                        label: "46",
+                        payload: payload0,
+                        queue_name: String(threadID),
+                        task_id: 400,
+                        failure_count: null
+                    },
+                    {
+                        label: "21",
+                        payload: {
+                            thread_id: String(threadID),
+                            last_read_watermark_ts: Date.now(),
+                            sync_group: 1
+                        },
+                        queue_name: String(threadID),
+                        task_id: 401,
+                        failure_count: null
+                    }
+                ],
+                epoch_id: epoch,
+                version_id: "24804310205905615",
+                data_trace_id: "#" + Buffer.from(String(Math.random())).toString("base64").replace(/=+$/, "")
+            },
+            request_id: requestId,
+            type: 3
+        };
+
+        content.payload.tasks = content.payload.tasks.map(function (task) {
+            return Object.assign({}, task, { payload: JSON.stringify(task.payload) });
+        });
+        content.payload = JSON.stringify(content.payload);
+
+        return await publishLsRequestWithAck(mqttClient, content, requestId);
+    }
+
+    return async function sendMessage(msg, threadID, callback, replyToMessage, isSingleUser) {
+        if (typeof callback === "string") {
+            isSingleUser = replyToMessage;
+            replyToMessage = callback;
+            callback = function () { };
+        } else if (typeof callback !== "function") {
+            callback = function () { };
+        }
+
+        var msgType = utils.getType(msg);
+        var threadIDType = utils.getType(threadID);
+
+        if (msgType !== "String" && msgType !== "Object") throw new Error("Message should be of type string or object and not " + msgType + ".");
+        if (threadIDType !== "Array" && threadIDType !== "Number" && threadIDType !== "String") throw new Error("ThreadID should be of type number, string, or array and not " + threadIDType + ".");
+        if (replyToMessage && utils.getType(replyToMessage) !== "String") throw new Error("replyToMessage should be of type string.");
+
+        if (msgType === "String") msg = { body: msg };
+
+        var disallowedProperties = Object.keys(msg).filter(function (prop) { return !allowedProperties[prop]; });
+        if (disallowedProperties.length > 0) throw new Error("Disallowed props: `" + disallowedProperties.join(", ") + "`");
+
+        var configSource = (global.GoatBot && global.GoatBot.config) ? global.GoatBot.config : (ctx.config || {});
+        var enableTypingIndicator = typeof configSource.enableTypingIndicator !== 'undefined' ? configSource.enableTypingIndicator : (ctx.config && ctx.config.enableTypingIndicator);
+        var typingDuration = Number(configSource.typingDuration || (ctx.config && ctx.config.typingDuration) || 4000);
+
+        if (enableTypingIndicator) {
+            await api.sendTypingIndicator(true, threadID, function () { });
+            await utils.delay(typingDuration);
+        }
+
+        try {
+            var result = await sendViaMqtt(msg, threadID, replyToMessage);
+            if (enableTypingIndicator) {
+                api.sendTypingIndicator(false, threadID, function () { }).catch(function () { });
+            }
+            if (typeof callback === "function") callback(null, result);
+            return result;
+        } catch (mqttErr) {
+            log.warn("sendMessage", "MQTT send failed, falling back to HTTP: " + (mqttErr && mqttErr.message));
+            if (enableTypingIndicator) {
+                api.sendTypingIndicator(false, threadID, function () { }).catch(function () { });
+            }
+            return api.OldMessage(msg, threadID, callback, replyToMessage, isSingleUser);
+        }
+    };
 };
