@@ -27,21 +27,83 @@ function setProxy(url) {
  * @param {undefined} [customHeader]
  */
 
-function getHeaders(url, options, ctx, customHeader) {
-    var headers = {
-        "Content-Type": "application/x-www-form-urlencoded",
-        Referer: "https://www.facebook.com/",
-        Host: url.replace("https://", "").split("/")[0],
-        Origin: "https://www.facebook.com",
-        "user-agent": (options.userAgent || "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5060.114 Safari/537.36"),
-        Connection: "keep-alive",
-        "sec-fetch-site": 'same-origin',
-        "sec-fetch-mode": 'cors'
-    };
-    if (customHeader) Object.assign(headers, customHeader);
-    if (ctx && ctx.region) headers["X-MSGR-Region"] = ctx.region;
+function sanitizeHeaderValue(value) {
+    if (value === null || value === undefined) return "";
+    var str = String(value);
+    if (str.trim().startsWith("[") && str.trim().endsWith("]")) {
+        try {
+            var parsed = JSON.parse(str);
+            if (Array.isArray(parsed)) return "";
+        } catch (_) { }
+    }
+    str = str.replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F\r\n\[\]]/g, "").trim();
+    return str;
+}
 
-    return headers;
+function sanitizeHeaderName(name) {
+    if (!name || typeof name !== "string") return "";
+    return name.replace(/[^\x21-\x7E]/g, "").trim();
+}
+
+function getHeaders(url, options, ctx, customHeader) {
+    options = options || {};
+    var host;
+    try { host = new URL(url).host; } catch (_) { host = url.replace("https://", "").split("/")[0]; }
+    var ua = options.userAgent ||
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.4 Safari/605.1.15";
+    var referer = options.referer || "https://www.facebook.com/";
+    var origin = referer.replace(/\/+$/, "");
+    var contentType = options.contentType || "application/x-www-form-urlencoded";
+    var acceptLang = options.acceptLanguage || "en-US,en;q=0.9";
+
+    var headers = {
+        Host: sanitizeHeaderValue(host),
+        Origin: sanitizeHeaderValue(origin),
+        Referer: sanitizeHeaderValue(referer),
+        "User-Agent": sanitizeHeaderValue(ua),
+        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,application/json;q=0.8,*/*;q=0.7",
+        "Accept-Language": sanitizeHeaderValue(acceptLang),
+        "Accept-Encoding": "gzip, deflate",
+        "Content-Type": sanitizeHeaderValue(contentType),
+        Connection: "keep-alive",
+        DNT: "1",
+        "Upgrade-Insecure-Requests": "1",
+        "sec-ch-ua": "\"Safari\";v=\"18\", \"Not;A=Brand\";v=\"24\"",
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": "\"macOS\"",
+        "Sec-Fetch-Site": "same-origin",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Dest": "empty",
+        "X-Requested-With": "XMLHttpRequest",
+        Pragma: "no-cache",
+        "Cache-Control": "no-cache"
+    };
+
+    if (ctx && ctx.region) {
+        var regionVal = sanitizeHeaderValue(ctx.region);
+        if (regionVal) headers["X-MSGR-Region"] = regionVal;
+    }
+
+    if (customHeader && typeof customHeader === "object") {
+        for (var key in customHeader) {
+            if (!Object.prototype.hasOwnProperty.call(customHeader, key)) continue;
+            var val = customHeader[key];
+            if (val === null || val === undefined || typeof val === "function") continue;
+            if (typeof val === "object") continue;
+            var sk = sanitizeHeaderName(key);
+            var sv = sanitizeHeaderValue(val);
+            if (sk && sv !== "") headers[sk] = sv;
+        }
+    }
+
+    var sanitized = {};
+    for (var k in headers) {
+        if (!Object.prototype.hasOwnProperty.call(headers, k)) continue;
+        var sk2 = sanitizeHeaderName(k);
+        var sv2 = sanitizeHeaderValue(headers[k]);
+        if (sk2 && sv2 !== "") sanitized[sk2] = sv2;
+    }
+    return sanitized;
 }
 
 /**
@@ -2603,9 +2665,9 @@ function saveCookies(jar) {
     return function (/** @type {{ headers: { [x: string]: any[]; }; }} */res) {
         var cookies = res.headers["set-cookie"] || [];
         cookies.forEach(function (/** @type {string} */c) {
-            if (c.indexOf(".facebook.com") > -1) { // yo wtf is this?
-                jar.setCookie(c, "https://www.facebook.com");
-                jar.setCookie(c.replace(/domain=\.facebook\.com/, "domain=.messenger.com"), "https://www.messenger.com");
+            if (c.indexOf(".facebook.com") > -1) {
+                try { jar.setCookie(c, "https://www.facebook.com"); } catch (_) { }
+                try { jar.setCookie(c.replace(/domain=\.facebook\.com/, "domain=.messenger.com"), "https://www.messenger.com"); } catch (_) { }
             }
         });
         return res;
