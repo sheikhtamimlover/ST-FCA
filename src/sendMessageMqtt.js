@@ -209,7 +209,6 @@ module.exports = function (defaultFuncs, api, ctx) {
       task.payload = JSON.stringify(task.payload);
     });
     form.payload = JSON.stringify(form.payload);
-    console.log(global.jsonStringifyColor(form, null, 2));
 
     return mqttClient.publish(
       "/ls_req",
