@@ -240,6 +240,7 @@ module.exports = function (defaultFuncs, api, ctx) {
 
   return function sendMessage(msg, threadID, callback, replyToMessage, isGroup) {
     typeof isGroup == "undefined" ? isGroup = null : "";
+    var isSingleUser = isGroup;
     if (!callback && (utils.getType(threadID) === "Function" || utils.getType(threadID) === "AsyncFunction")) return threadID({ error: "Pass a threadID as a second argument." });
     if (!replyToMessage && utils.getType(callback) === "String") {
       replyToMessage = callback;
