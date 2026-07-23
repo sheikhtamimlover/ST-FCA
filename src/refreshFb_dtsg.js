@@ -4,13 +4,6 @@ const utils = require("../utils");
 // @NethWs3Dev
 
 module.exports = function (defaultFuncs, api, ctx) {
- /**
-   * Refreshes the fb_dtsg and jazoest values.
-   * @param {Function} callback
-   * @returns {Promise}
-   * @description if you don't update the value of fb_dtsg and jazoest for a long time an error "Please try closing and re-opening your browser window" will appear
-   * @description you should refresh it every 48h or less
-   */
   return function refreshFb_dtsg(obj, callback) {
     let resolveFunc = function () {};
     let rejectFunc = function () {};
@@ -32,7 +25,7 @@ module.exports = function (defaultFuncs, api, ctx) {
     }
 
     if (utils.getType(obj) !== "Object") {
-      throw new utils.CustomError(
+      throw new Error(  // ← Here is the problem
         "the first parameter must be an object or a callback function",
       );
     }
@@ -56,7 +49,7 @@ module.exports = function (defaultFuncs, api, ctx) {
           const fb_dtsg = utils.getFrom(html, 'name="fb_dtsg" value="', '"');
           const jazoest = utils.getFrom(html, 'name="jazoest" value="', '"');
           if (!fb_dtsg) {
-            throw new utils.CustomError(
+            throw new Error(  // ← Here is the problem
               "Could not find fb_dtsg in HTML after requesting https://www.facebook.com/",
             );
           }
