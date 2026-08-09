@@ -5,17 +5,6 @@ var utils = require("../utils");
 
 module.exports = function (defaultFuncs, api, ctx) {
 	return async function sendTypingIndicatorV2(sendTyping, threadID, callback) {
-		// ── sendTypingE2EE: route E2EE typing indicator through the bridge ──────
-		if (ctx.globalOptions && ctx.globalOptions.enableE2EE) {
-			var _e2eeMod = require('../e2ee');
-			if (_e2eeMod.isE2EEChatJid(String(threadID))) {
-				return _e2eeMod.createBridge(ctx).sendTyping(threadID, sendTyping !== false)
-					.then(function (r) { if (typeof callback === 'function') callback(null, r); return r; })
-					.catch(function (e) { if (typeof callback === 'function') callback(e); });
-			}
-		}
-		// ── end sendTypingE2EE ────────────────────────────────────────────────────
-
 		const mqttClient = ctx.mqttClient || global.mqttClient;
 		if (!mqttClient) {
 			if (typeof callback === 'function') callback(new Error('No MQTT client available for typing indicator'));

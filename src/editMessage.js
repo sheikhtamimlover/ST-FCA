@@ -23,19 +23,6 @@ function canBeCalled(func) {
 
 module.exports = function (defaultFuncs, api, ctx) {
     return function editMessage(text, messageID, callback) {
-        // ── editMessageE2EE: route E2EE messages through the bridge ──────────────
-        if (ctx.globalOptions && ctx.globalOptions.enableE2EE) {
-            var _e2eeMod = require('../e2ee');
-            var _jid = global._e2eeMessageMap && global._e2eeMessageMap.get(String(messageID));
-            if (_jid && _e2eeMod.isE2EEChatJid(_jid)) {
-                var _p = _e2eeMod.createBridge(ctx).editMessage(_jid, messageID, text)
-                    .then(function (r) { if (typeof callback === "function") callback(null, r); return r; })
-                    .catch(function (e) { if (typeof callback === "function") callback(e); throw e; });
-                return _p;
-            }
-        }
-        // ── end editMessageE2EE ───────────────────────────────────────────────────
-
         if (!ctx.mqttClient) {
             throw new Error('Not connected to MQTT');
         }

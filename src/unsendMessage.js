@@ -21,27 +21,6 @@ module.exports = function (defaultFuncs, api, ctx) {
       };
     }
 
-    // ── unsendMessageE2EE: route E2EE unsend through the bridge ─────────────
-    if (ctx.globalOptions && ctx.globalOptions.enableE2EE) {
-      var _e2eeMod = require('../e2ee');
-      var _jid = global._e2eeMessageMap && global._e2eeMessageMap.get(String(messageID));
-      // Fallback: if messageID not in map but a pending JID was set externally, use it
-      if (!_jid && global._e2eePendingUnsendJid) {
-        var _pjid = global._e2eePendingUnsendJid[String(messageID)];
-        if (_pjid) {
-          _jid = _pjid;
-          delete global._e2eePendingUnsendJid[String(messageID)];
-        }
-      }
-      if (_jid && _e2eeMod.isE2EEChatJid(_jid)) {
-        _e2eeMod.createBridge(ctx).unsendMessage(_jid, messageID)
-          .then(function (r) { callback(null, r); resolveFunc(r); })
-          .catch(function (e) { callback(e); rejectFunc(e); });
-        return returnPromise;
-      }
-    }
-    // ── end unsendMessageE2EE ─────────────────────────────────────────────────
-
     const form = {
       message_id: messageID,
     };

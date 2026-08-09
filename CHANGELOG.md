@@ -3,6 +3,15 @@
 
 All notable changes to ST-FCA will be documented in this file.
 
+## [1.2.30] - 2026-08-01
+
+### Changed
+- ❌ Removed e2ee cuz of some AI users who copy the project and claim it by their name.
+
+### Fixed
+- ✅ Updated to new version with fixed bugs
+- ✅ Fixed CustomError class issue
+
 ## [1.0.5] - 2025-01-13
 
 ### Added
@@ -60,6 +69,6 @@ All notable changes to ST-FCA will be documented in this file.
 
 ---
 
-**Maintained & Enhanced by ST | Sheikh Tamim**  
-GitHub: https://github.com/sheikhtamimlover/ST-FCA  
-NPM: https://www.npmjs.com/package/stfca
+**Maintained & Enhanced by Bruxa - Rakib Adil**  
+GitHub: https://github.com/bruxa6t9/ST-FCA  
+NPM: https://www.npmjs.com/package/@bruxa/stfca

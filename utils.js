@@ -2971,6 +2971,14 @@ function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+class CustomError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = 'CustomError';
+        console.error(`[${this.name}] ${message}`);
+    }
+}
+
 module.exports = {
     cleanHTML,
     isReadableStream: isReadableStream,
@@ -3020,5 +3028,7 @@ module.exports = {
     getEventTime,
     getSessionID,
     getFormData,
-    delay
+    delay,
+    error: console.error,
+    CustomError
 };

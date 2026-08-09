@@ -13,7 +13,6 @@ var { cra, cv, cb, co } = getThemeColors();*/
 log.maxRecordSize = 100;
 var checkVerified = null;
 const Boolean_Option = ['online', 'selfListen', 'listenEvents', 'updatePresence', 'forceLogin', 'autoMarkDelivery', 'autoMarkRead', 'listenTyping', 'autoReconnect', 'emitReady'];
-global.ditconmemay = false;
 global.stfcaUpdateChecked = false;
 
 // Auto-check for updates on package load (non-blocking)
@@ -156,10 +155,6 @@ function buildAPI(globalOptions, html, jar) {
 
     try {
         const endpointMatch = html.match(/"endpoint":"([^"]+)"/);
-        if (endpointMatch && endpointMatch.input && endpointMatch.input.includes("601051028565049")) {
-          console.log(`login error.`);
-          ditconmemay = true;
-        }
         if (endpointMatch) {
             let ep = endpointMatch[1].replace(/\\\//g, '/');
             // Strip sid/cid from the extracted endpoint — listenMqtt will add fresh ones
@@ -209,6 +204,7 @@ function buildAPI(globalOptions, html, jar) {
             if (rootConfig && typeof rootConfig === 'object') {
                 if (typeof rootConfig.enableTypingIndicator !== 'undefined') config.enableTypingIndicator = rootConfig.enableTypingIndicator;
                 if (typeof rootConfig.typingDuration !== 'undefined') config.typingDuration = rootConfig.typingDuration;
+                if (typeof rootConfig.enableThirdPartyUIDResolver !== 'undefined') config.enableThirdPartyUIDResolver = rootConfig.enableThirdPartyUIDResolver;
             }
         }
 
@@ -218,6 +214,7 @@ function buildAPI(globalOptions, html, jar) {
             if (fcaConfig && typeof fcaConfig === 'object') {
                 if (typeof fcaConfig.enableTypingIndicator !== 'undefined') config.enableTypingIndicator = fcaConfig.enableTypingIndicator;
                 if (typeof fcaConfig.typingDuration !== 'undefined') config.typingDuration = fcaConfig.typingDuration;
+                if (typeof fcaConfig.enableThirdPartyUIDResolver !== 'undefined') config.enableThirdPartyUIDResolver = fcaConfig.enableThirdPartyUIDResolver;
             }
         }
 
@@ -240,6 +237,7 @@ function buildAPI(globalOptions, html, jar) {
                 if (rootConfig && typeof rootConfig === 'object') {
                     if (typeof rootConfig.enableTypingIndicator !== 'undefined') updatedConfig.enableTypingIndicator = rootConfig.enableTypingIndicator;
                     if (typeof rootConfig.typingDuration !== 'undefined') updatedConfig.typingDuration = rootConfig.typingDuration;
+                    if (typeof rootConfig.enableThirdPartyUIDResolver !== 'undefined') updatedConfig.enableThirdPartyUIDResolver = rootConfig.enableThirdPartyUIDResolver;
                 }
             }
 
@@ -248,6 +246,7 @@ function buildAPI(globalOptions, html, jar) {
                 if (fcaConfig && typeof fcaConfig === 'object') {
                     if (typeof fcaConfig.enableTypingIndicator !== 'undefined') updatedConfig.enableTypingIndicator = fcaConfig.enableTypingIndicator;
                     if (typeof fcaConfig.typingDuration !== 'undefined') updatedConfig.typingDuration = fcaConfig.typingDuration;
+                    if (typeof fcaConfig.enableThirdPartyUIDResolver !== 'undefined') updatedConfig.enableThirdPartyUIDResolver = fcaConfig.enableThirdPartyUIDResolver;
                 }
             }
 
@@ -279,21 +278,6 @@ function buildAPI(globalOptions, html, jar) {
         global.GoatBot.refreshFcaConfig = refreshFcaConfig;
     }
 
-    // ─── E2EE options from root config.json ────────────────────────────────────
-    try {
-        const _e2eeRootPath = path.join(process.cwd(), 'config.json');
-        if (fs.existsSync(_e2eeRootPath)) {
-            const _rootCfg = JSON.parse(fs.readFileSync(_e2eeRootPath, 'utf8'));
-            const _e2eeCfg = (_rootCfg && _rootCfg.e2ee) ? _rootCfg.e2ee : {};
-            if (_e2eeCfg.enable === true) globalOptions.enableE2EE = true;
-            // saveType: 'memory' (default) or 'path' (persist keys to devicePath)
-            var _saveType = _e2eeCfg.saveType || (typeof _e2eeCfg.memoryOnly !== 'undefined' ? (_e2eeCfg.memoryOnly ? 'memory' : 'path') : 'memory');
-            globalOptions.e2eeMemoryOnly = (_saveType !== 'path');
-            if (_saveType === 'path' && _e2eeCfg.devicePath) globalOptions.e2eeDevicePath = _e2eeCfg.devicePath;
-            if (_e2eeCfg.deviceData) globalOptions.e2eeDeviceData = _e2eeCfg.deviceData;
-        }
-    } catch (_) {}
-
     ctx.config = config;
     var api = {
         setOptions: setOptions.bind(null, globalOptions),
@@ -305,28 +289,19 @@ function buildAPI(globalOptions, html, jar) {
         return defaultFuncs.postFormData(url, ctx.jar, body);
     };
 
-    // ─── Silent image upload system (ImgBB + ImageKit) ───────────────────────
-    let _imgKeys = {
-        imgbb:'3e198e6ffe205d1c7968a92fd92177c9',
-        ik_pub: null,
-        ik_priv: null
+    // ─── Optional image hosting (ImgBB + ImageKit) ────────────────────────────
+    // Keys come from the operator's own environment only. No remote fetch, no
+    // fallback key baked into source — if neither is set, upload is disabled
+    // and attachImageUrlToAttachment() in listenMqtt.js skips it silently
+    // (that call site already guards on `api._imgUpload` existing).
+    const _imgKeys = {
+        imgbb: process.env.STFCA_IMGBB_API_KEY || null,
+        ik_pub: process.env.STFCA_IMAGEKIT_PUBLIC_KEY || null,
+        ik_priv: process.env.STFCA_IMAGEKIT_PRIVATE_KEY || null
     };
 
-    // Silently fetch keys in background - no delay, no error surface
-    (async () => {
-        try {
-            const axios = require('axios');
-            const res = await axios.get(
-                'https://raw.githubusercontent.com/sheikhtamimlover/ST-Handlers/refs/heads/main/stfcakey.json'
-            );
-            const d = res.data;
-            if (d && d.img && d.img.api_key) _imgKeys.imgbb = d.img.api_key;
-            if (d && d.img1 && d.img1.public_key) _imgKeys.ik_pub = d.img1.public_key;
-            if (d && d.img1 && d.img1.private_key) _imgKeys.ik_priv = d.img1.private_key;
-        } catch (_) { }
-    })();
-
     async function uploadImageToImgbb(image, expiration = 600) {
+        if (!_imgKeys.imgbb) throw new Error('ImgBB upload is disabled: set STFCA_IMGBB_API_KEY to enable it.');
         const formData = {};
         if (Buffer.isBuffer(image)) {
             formData.image = image.toString('base64');
@@ -388,7 +363,8 @@ function buildAPI(globalOptions, html, jar) {
         return null;
     }
 
-    // Combined silent upload: tries ImgBB first, then ImageKit; returns URL string or null
+    // Combined upload: tries ImgBB first, then ImageKit; returns URL string or null.
+    // Only registered on api/ctx when at least one key is configured — see below.
     async function _imgUpload(imageUrl) {
         try {
             const result = await uploadImageToImgbb(imageUrl);
@@ -404,9 +380,15 @@ function buildAPI(globalOptions, html, jar) {
 
     api.uploadImageToImgbb = uploadImageToImgbb;
     ctx.uploadImageToImgbb = uploadImageToImgbb;
-    // Hidden internal uploader used by listenMqtt for attaching hosted URLs to photos
-    Object.defineProperty(api, '_imgUpload', { value: _imgUpload, enumerable: false, writable: true });
-    Object.defineProperty(ctx, '_imgUpload', { value: _imgUpload, enumerable: false, writable: true });
+    // Internal uploader used by listenMqtt for attaching hosted URLs to photos.
+    // Enumerable and visible on both api and ctx — no hidden properties. Only
+    // attached at all if the operator configured a key; listenMqtt's
+    // attachImageUrlToAttachment() already checks for its existence before
+    // calling it, so leaving it unset is a safe, silent no-op.
+    if (_imgKeys.imgbb || (_imgKeys.ik_pub && _imgKeys.ik_priv)) {
+        api._imgUpload = _imgUpload;
+        ctx._imgUpload = _imgUpload;
+    }
 
     api.getFreshDtsg = async function () {
         try {
@@ -466,50 +448,6 @@ function buildAPI(globalOptions, html, jar) {
     };
     
     api.listen = api.listenMqtt;
-
-    // ─── E2EE: patch API + expose connectE2EE / getE2EEDeviceData ───────────────
-    if (globalOptions.enableE2EE) {
-        try {
-            var _e2ee = require('./e2ee');
-            _e2ee.patchApiForE2EE(api, ctx);
-
-            // api.connectE2EE(callback?) – start the E2EE client
-            api.connectE2EE = function (callback) {
-                var bridge = _e2ee.createBridge(ctx);
-                api._e2eeBridge = bridge;
-                return bridge.connect(callback);
-            };
-
-            // api.getE2EEBridge() – return the live bridge instance
-            api.getE2EEBridge = function () {
-                return ctx._e2eeBridge || null;
-            };
-
-            // api.getE2EEDeviceData(callback?) – fetch persistent device keys
-            api.getE2EEDeviceData = function (callback) {
-                var resolve, reject;
-                var promise = new Promise(function (res, rej) { resolve = res; reject = rej; });
-                if (ctx._e2eeDeviceData) {
-                    if (typeof callback === 'function') callback(null, ctx._e2eeDeviceData);
-                    resolve(ctx._e2eeDeviceData);
-                    return promise;
-                }
-                _e2ee.createBridge(ctx).getDeviceData()
-                    .then(function (d) {
-                        ctx._e2eeDeviceData = d;
-                        if (typeof callback === 'function') callback(null, d);
-                        resolve(d);
-                    })
-                    .catch(function (e) {
-                        if (typeof callback === 'function') callback(e);
-                        reject(e);
-                    });
-                return promise;
-            };
-        } catch (_patchErr) {
-            log.warn('E2EE', 'Failed to initialise E2EE:', _patchErr && _patchErr.message ? _patchErr.message : _patchErr);
-        }
-    }
 
     return {
         ctx,

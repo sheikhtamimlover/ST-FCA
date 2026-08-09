@@ -8,6 +8,22 @@ const log = require('npmlog');
 
 module.exports = function (defaultFuncs, api, ctx) {
   return function getUID(link, callback) {
+    /*
+     * Both resolution paths send the target profile URL/username to
+     * id.traodoisub.com and api.findids.net — third-party services this
+     * project doesn't control. Off by default; the operator opts in
+     * explicitly, once, rather than every call silently disclosing who
+     * the bot is looking up.
+     */
+    if (!(ctx.config && ctx.config.enableThirdPartyUIDResolver)) {
+      const err = new Error(
+        'getUID is disabled by default because it sends the profile URL to third-party ' +
+        'services (id.traodoisub.com, api.findids.net). Set "enableThirdPartyUIDResolver": true ' +
+        'in config.json to enable it.'
+      );
+      if (callback) { callback(err); return; }
+      return Promise.reject(err);
+    }
     let resolveFunc = function () { };
     let rejectFunc = function () { };
     let returnPromise = new Promise(function (resolve, reject) {
@@ -112,7 +128,7 @@ module.exports = function (defaultFuncs, api, ctx) {
       }
     } catch (e) {
       log.error('getUID', "Error: " + e.message);
-      return callback(null, e);
+      return callback(e);
     }
     return returnPromise;
   };

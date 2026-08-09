@@ -26,31 +26,6 @@ module.exports = function (defaultFuncs, api, ctx) {
       };
     }
 
-    // ── sendReactionE2EE: route E2EE reactions through the bridge ─────────────
-    if (ctx.globalOptions && ctx.globalOptions.enableE2EE) {
-      var _e2eeMod = require('../e2ee');
-      var _jid = global._e2eeMessageMap && global._e2eeMessageMap.get(String(messageID));
-      if (_jid && _e2eeMod.isE2EEChatJid(_jid)) {
-        var _senderJid = (global._e2eeSenderJidMap && global._e2eeSenderJidMap.get(String(messageID))) || null;
-        // Always route through the bridge when the JID is confirmed E2EE —
-        // never fall through to the HTTP path which cannot reach E2EE threads.
-        // senderJid is required by the E2EE protocol; fall back to chatJid for DMs
-        // (in a DM the chatJid IS the other person's JID).
-        var _effectiveSender = _senderJid || _jid;
-        _e2eeMod.createBridge(ctx).sendReaction(_jid, messageID, _effectiveSender, reaction)
-          .then(function (r) { callback(null, r); resolveFunc(r); })
-          .catch(function (e) {
-            var log = require('../utils').log;
-            log.error("setMessageReaction", "E2EE sendReaction failed — jid:" + _jid +
-              " msgID:" + messageID + " sender:" + _effectiveSender + " emoji:" + reaction +
-              " err:" + (e && e.message ? e.message : String(e)));
-            callback(e); rejectFunc(e);
-          });
-        return returnPromise;
-      }
-    }
-    // ── end sendReactionE2EE ──────────────────────────────────────────────────
-
     switch (reaction) {
       case "\uD83D\uDE0D": //:heart_eyes:
       case "\uD83D\uDE06": //:laughing:

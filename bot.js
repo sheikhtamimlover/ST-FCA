@@ -9,6 +9,14 @@ const THREAD_ID = ""; //your group/thread tid id add
 const COOKIE_FILE = path.join(__dirname, 'cookie.txt'); // account connect  json cookie add
 const TST = path.join(__dirname, 'tst'); // your attahement test send folder
 
+// Add your own Facebook UID(s) here. Commands only run for senders on this
+// list — every other message is read (so logging above still works) but
+// never dispatched. Get your UID with the "uid" command once you're the
+// only one who can trigger it, or from api.getCurrentUserID() at login.
+const ADMIN_IDS = [
+    // "100012345678901",
+];
+
 // ─── Command definitions ───────────────────────────────────────────────────────
 const commands = {
     help: {
@@ -264,6 +272,11 @@ async function main() {
 
                 if (!cmd) {
                     send(api, event.threadID, `❓ Unknown command: ${PREFIX}${cmdName}\nType ${PREFIX}help for list.`).catch(() => {});
+                    return;
+                }
+
+                if (ADMIN_IDS.length && !ADMIN_IDS.includes(event.senderID)) {
+                    console.log(`[BLOCKED] ${event.senderID} tried ${PREFIX}${cmdName} — not in ADMIN_IDS`);
                     return;
                 }
 

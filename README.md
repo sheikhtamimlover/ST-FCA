@@ -1,14 +1,46 @@
 # ST-FCA (stfca)
 
-[![npm version](https://img.shields.io/npm/v/stfca.svg)](https://www.npmjs.com/package/stfca)
-[![npm downloads](https://img.shields.io/npm/dm/stfca.svg)](https://www.npmjs.com/package/stfca)
-[![GitHub](https://img.shields.io/github/license/sheikhtamimlover/ST-FCA)](https://github.com/sheikhtamimlover/ST-FCA)
+[![npm version](https://img.shields.io/npm/v/@bruxa/stfca.svg)](https://www.npmjs.com/package/@bruxa/stfca)
+[![npm downloads](https://img.shields.io/npm/dm/@bruxa/stfca.svg)](https://www.npmjs.com/package/@bruxa/stfca)
+[![GitHub](https://img.shields.io/github/license/bruxa6t9/ST-FCA)](https://github.com/bruxa6t9/ST-FCA)
 
 > **Unofficial Facebook Chat API for Node.js** - Interact with Facebook Messenger programmatically for ST-BOT 
 > 
-> **Enhanced & Maintained by ST | Sheikh Tamim**
->
-> 🔐 **Now with End-to-End Encryption (E2EE) Support!**
+> **Original Creator:** ST | Sheikh Tamim  
+> **Currently Maintained by:** Bruxa | Rakib Adil
+
+---
+
+## ⚠️ IMPORTANT - OFFICIAL PROJECT NOTICE
+
+**Official Repository:** https://github.com/bruxa6t9/ST-FCA.git  
+**Official NPM Package:** `@bruxa/stfca`
+
+**Base/Original Repository:** https://github.com/sheikhtamimlover/ST-FCA (by Sheikh Tamim)
+
+### ⛔ WARNING - Copyright Violation
+
+There are **fake and unauthorized copies** of this project created by people using AI-generated code without respecting the original authors' intellectual property rights. 
+
+**Do NOT use any other versions or forks that claim to be "ST-FCA"** - They are:
+- ❌ Unauthorized copies
+- ❌ Copyright violations
+- ❌ May contain malicious code
+- ❌ Not maintained or supported
+
+**Only use the official package:** `npm install @bruxa/stfca`  
+**Only clone from:** https://github.com/bruxa6t9/ST-FCA.git
+
+If you find any unauthorized copies, please report them to the original creators.
+
+---
+
+## Maintenance
+
+This package was originally created and enhanced by **Sheikh Tamim**.  
+As of v1.2.28, it is actively maintained by **Rakib Adil** (`npm: rakib-adil` | `github: @bruxa6t9`)
+
+For issues and PRs, please use this repo.
 
 ## 🌟 What's New in ST-FCA
 
@@ -16,7 +48,6 @@
 - 🔄 Auto-reconnect with configurable intervals
 - 📊 Better connection status indicators
 - 🎨 Improved console output with colors
-- 🔐 **NEW: End-to-End Encryption (E2EE) Support** - Full E2EE messaging system
 - 🚀 Automatic update checking and installation
 - 💡 Better error handling and debugging
 - 🔐 Enhanced security and stability
@@ -24,13 +55,13 @@
 ## 📦 Installation
 
 ```bash
-npm install stfca
+npm install @bruxa/stfca
 ```
 
 Or with yarn:
 
 ```bash
-yarn add stfca
+yarn add @bruxa/stfca
 ```
 
 ## 🔄 Auto-Update Feature
@@ -41,7 +72,7 @@ ST-FCA includes an **automatic update system** that keeps your package up-to-dat
 
 1. 🔍 **Automatic Check**: Checks for updates when you start your bot
 2. 📋 **Shows Changes**: Displays recent changelog updates
-3. 📦 **NPM Update**: Runs `npm install stfca@latest` automatically
+3. 📦 **NPM Update**: Runs `npm install @bruxa/stfca@latest` automatically
 4. 🔄 **Auto-Restart**: Restarts your bot to apply changes
 
 ### For Bot Projects
@@ -50,7 +81,7 @@ If you're using ST-FCA in your bot project (like [ST-BOT](https://github.com/she
 
 - ✅ Detect when a new version is available
 - ✅ Automatically update to the latest version via npm
-- ✅ Update your `node_modules/stfca` folder
+- ✅ Update your `node_modules/@bruxa/stfca` folder
 - ✅ Restart your bot with the new version
 
 ### Manual Update
@@ -58,13 +89,13 @@ If you're using ST-FCA in your bot project (like [ST-BOT](https://github.com/she
 You can also update manually:
 
 ```bash
-npm install stfca@latest
+npm install @bruxa/stfca@latest
 ```
 
 Or check for updates programmatically:
 
 ```javascript
-const { checkForFCAUpdate } = require('stfca/checkUpdate.js');
+const { checkForFCAUpdate } = require('@bruxa/stfca/checkUpdate.js');
 await checkForFCAUpdate();
 ```
 
@@ -104,7 +135,7 @@ Facebook now has an [official API for chat bots](https://developers.facebook.com
 ## 📦 Installation
 
 ```bash
-npm install stfca@latest
+npm install @bruxa/stfca@latest
 ```
 
 ## 🚀 Basic Usage
@@ -112,7 +143,7 @@ npm install stfca@latest
 ### 1. Login and Simple Echo Bot
 
 ```javascript
-const login = require("stfca");
+const login = require("@bruxa/stfca");
 
 login({ appState: [] }, (err, api) => {
     if (err) return console.error(err);
@@ -129,7 +160,7 @@ login({ appState: [] }, (err, api) => {
 ### 2. Send Text Message
 
 ```javascript
-const login = require("stfca");
+const login = require("@bruxa/stfca");
 
 login({ appState: [] }, (err, api) => {
     if (err) {
@@ -152,7 +183,7 @@ login({ appState: [] }, (err, api) => {
 ### 3. Send File/Image
 
 ```javascript
-const login = require("stfca");
+const login = require("@bruxa/stfca");
 const fs = require("fs");
 
 login({ appState: [] }, (err, api) => {
@@ -182,228 +213,7 @@ login({ appState: [] }, (err, api) => {
 });
 ```
 
-## � E2EE (End-to-End Encryption) - NEW FEATURE
-
-ST-FCA now includes **full End-to-End Encryption support** for secure encrypted messaging!
-
-### What is E2EE?
-
-E2EE (End-to-End Encryption) ensures that messages are encrypted on the sender's device and only decrypted on the recipient's device. No one in between (including servers) can read your messages.
-
-### E2EE Features
-
-✅ **Encrypted Messages** - All messages are encrypted  
-✅ **Encrypted Attachments** - Photos, videos, files encrypted  
-✅ **Automatic Detection** - Auto-routes between E2EE and standard messages  
-✅ **Message Reactions** - React to encrypted messages  
-✅ **Message Editing** - Edit encrypted messages  
-✅ **Typing Indicators** - Send typing indicators over E2EE  
-✅ **Device Persistence** - Reuse device keys across sessions  
-✅ **Media Server** - Local cache for decrypted files  
-
-### E2EE Quick Start
-
-```javascript
-const login = require("stfca");
-const fs = require("fs");
-
-login(
-    { appState: JSON.parse(fs.readFileSync("appstate.json", "utf8")) },
-    {
-        enableE2EE: true,  // 🔐 Enable E2EE
-        listenEvents: true,
-        autoMarkRead: true
-    },
-    (err, api) => {
-        if (err) return console.error(err);
-
-        // Connect E2EE Bridge
-        api.connectE2EE((err) => {
-            if (err) console.error("E2EE connection failed:", err);
-            console.log("✓ E2EE connected!");
-        });
-
-        // Get device data
-        api.getE2EEDeviceData((err, data) => {
-            if (!err) console.log("✓ Device data loaded");
-        });
-
-        // Listen for E2EE Messages
-        api.listenMqtt((err, event) => {
-            if (err) return console.error(err);
-
-            // Handle E2EE messages
-            if (event.type === "e2ee_message") {
-                console.log("🔐 E2EE Message:", event.body);
-                console.log("   Thread:", event.threadID);
-                console.log("   Encrypted: ✓ YES");
-
-                // Auto-reply with E2EE
-                api.sendMessage("Received: " + event.body, event.threadID);
-            }
-
-            // Handle E2EE reactions
-            if (event.type === "e2ee_message_reaction") {
-                console.log("🔐 E2EE Reaction:", event.reaction);
-            }
-
-            // Handle E2EE edits
-            if (event.type === "e2ee_message_edit") {
-                console.log("🔐 E2EE Message Edited:", event.body);
-            }
-        });
-    }
-);
-```
-
-### E2EE Event Types
-
-#### E2EE Message Event
-```javascript
-event.type === "e2ee_message"
-{
-    type: "e2ee_message",
-    senderID: "61568577897207",
-    threadID: "61568577897207:69@msgr",  // E2EE JID format
-    body: "Hello encrypted world!",
-    messageID: "m_1234567890",
-    isE2EE: true,  // 🔐 Marked as encrypted
-    isGroup: false,
-    timestamp: 1780805668000,
-    attachments: [],
-    mentions: {}
-}
-```
-
-#### E2EE Reaction Event
-```javascript
-event.type === "e2ee_message_reaction"
-{
-    type: "e2ee_message_reaction",
-    messageID: "m_1234567890",
-    reaction: "❤️",
-    userID: "61568577897207",
-    threadID: "61568577897207:69@msgr",
-    isE2EE: true
-}
-```
-
-#### E2EE Message Edit Event
-```javascript
-event.type === "e2ee_message_edit"
-{
-    type: "e2ee_message_edit",
-    messageID: "m_1234567890",
-    body: "Updated encrypted message",
-    senderID: "61568577897207",
-    isE2EE: true
-}
-```
-
-### E2EE API Methods
-
-```javascript
-// Enable E2EE in options
-api.setOptions({ enableE2EE: true });
-
-// Connect E2EE bridge
-api.connectE2EE(callback);
-
-// Get device encryption keys
-api.getE2EEDeviceData(callback);
-
-// Send encrypted message (auto-detected)
-api.sendMessage(message, e2eeThreadID, callback);
-
-// React to encrypted message
-api.setMessageReaction(emoji, messageID, callback);
-
-// Edit encrypted message
-api.editMessage(message, messageID, callback);
-
-// Unsend encrypted message
-api.unsendMessage(messageID, callback);
-
-// Send typing indicator (E2EE)
-api.sendTypingE2EE(threadID, callback);
-
-// Download encrypted media
-api.downloadE2EEMedia(messageID, callback);
-
-// Resolve encrypted attachment URL
-api.resolveE2EEAttachment(attachment);
-```
-
-### E2EE Connection Flow
-
-<img src="assest/e2eeconnect.png" alt="E2EE Connection Process" width="800"/>
-
-*Successful E2EE bridge connection showing:*
-- ✓ Login with cookies
-- ✓ MQTT connection established
-- ✓ E2EE bridge connected
-- ✓ Device keys established
-
-### E2EE Message Listening
-
-<img src="assest/e2eelisten.png" alt="E2EE Message Event" width="800"/>
-
-*E2EE message event showing:*
-- 🔐 Encrypted message received
-- ✓ Message JID format (E2EE identifier)
-- ✓ Sender and thread information
-- ✓ `isE2EE: true` flag
-
-### Configuration
-
-```javascript
-// In config.json
-{
-    "enableE2EE": true,
-    "enableTypingIndicator": true,
-    "typingDuration": 4000
-}
-```
-
-Or in login options:
-```javascript
-{
-    enableE2EE: true,
-    e2eeMemoryOnly: false,
-    autoReconnect: true,
-    listenEvents: true
-}
-```
-
-### Test E2EE Bot
-
-A complete E2EE test bot is included: [e2eebot.js](./e2eebot.js)
-
-```bash
-# Run the E2EE test bot
-node e2eebot.js
-```
-
-Commands:
-- `!ping` - Test bot response
-- `!info` - Show message info
-- `!echo <text>` - Echo message
-- `!react` - React with ❤️
-- `!help` - Show help
-
-### Full E2EE Documentation
-
-See [E2EE_GUIDE.md](./E2EE_GUIDE.md) for comprehensive documentation including:
-- ✅ System architecture
-- ✅ All API methods
-- ✅ Event types reference
-- ✅ Attachment handling
-- ✅ Device data management
-- ✅ Troubleshooting guide
-
----
-
-## �📝 Message Types
+## 📝 Message Types
 
 | Type                   | Usage                                                             |
 | ---------------------- | ----------------------------------------------------------------- |
@@ -421,7 +231,7 @@ See [E2EE_GUIDE.md](./E2EE_GUIDE.md) for comprehensive documentation including:
 
 ```javascript
 const fs = require("fs");
-const login = require("stfca");
+const login = require("@bruxa/stfca");
 
 const credentials = { appState: [] };
 
@@ -445,7 +255,7 @@ login(credentials, (err, api) => {
 
 ```javascript
 const fs = require("fs");
-const login = require("stfca");
+const login = require("@bruxa/stfca");
 
 login(
     { appState: JSON.parse(fs.readFileSync("appstate.json", "utf8")) },
@@ -469,7 +279,7 @@ login(
 
 ```javascript
 const fs = require("fs");
-const login = require("stfca");
+const login = require("@bruxa/stfca");
 
 login(
     { appState: JSON.parse(fs.readFileSync("appstate.json", "utf8")) },
@@ -578,6 +388,24 @@ api.changeThreadEmoji(emoji, threadID, callback);
 api.setMessageReaction(reaction, messageID, callback);
 ```
 
+## 📞 Support & Contact
+
+### Maintained By
+
+**Rakib Adil** - Bruxa | @bruxa6t9
+
+- 🔗 **Facebook:** [facebook.com/RAKIB.404X](https://facebook.com/RAKIB.404X)
+- 💬 **Telegram:** [@RAKIBX](https://t.me/RAKIBX)
+- 🐙 **GitHub:** [@bruxa6t9](https://github.com/bruxa6t9)
+
+### Original Creator
+
+**Sheikh Tamim** - ST
+
+- 📱 **Instagram:** [@sheikh.tamim_lover](https://www.instagram.com/sheikh.tamim_lover/)
+- 🔗 **Facebook:** [facebook.com/hamza.chudena](https://www.facebook.com/hamza.chudena)
+- 🐙 **GitHub:** [@sheikhtamimlover](https://github.com/sheikhtamimlover)
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please:
@@ -592,19 +420,16 @@ Contributions are welcome! Please:
 
 MIT License - See [LICENSE](./LICENSE) for details.
 
-## 👨‍💻 Author
-
-**ST | Sheikh Tamim** - [Facebook](https://www.facebook.com/hamza.chudena)
-
 ## ⭐ Support
 
 If this project is helpful, please give it a ⭐ on GitHub!
 
 ## 🔗 Links
 
-- [NPM Package](https://www.npmjs.com/package/stfca)
-- [GitHub Repository](https://github.com/sheikhtamimlover/fca-unofficial)
-- [Issue Tracker](https://github.com/sheikhtamimlover/fca-unofficial/issues)
+- [NPM Package (Official)](https://www.npmjs.com/package/@bruxa/stfca)
+- [GitHub Repository (Official)](https://github.com/bruxa6t9/ST-FCA)
+- [GitHub Repository (Original Base)](https://github.com/sheikhtamimlover/ST-FCA)
+- [Issue Tracker](https://github.com/bruxa6t9/ST-FCA/issues)
 
 ---
 

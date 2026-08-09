@@ -260,98 +260,6 @@ module.exports = function (defaultFuncs, api, ctx) {
             callback = function () { };
         }
 
-        // ── E2EE routing – sendMessageE2EE + sendMediaE2EE + downloadE2EEMedia ──
-        // When the destination thread is an E2EE JID (contains "@"), route through
-        // the Labyrinth native bridge instead of the MQTT/HTTP path.
-        // (Also exposes api.downloadE2EEMedia for decrypting received attachments.)
-        var _e2eeMod = require('../e2ee');
-        // Route to E2EE bridge whenever threadID is a JID — the "@" is definitive.
-        // Also respect explicit enableE2EE flag as a fallback check.
-        if (_e2eeMod.isE2EEChatJid(String(threadID))) {
-            var _bridge = _e2eeMod.createBridge(ctx);
-            var _form   = typeof msg === "string" ? { body: msg } : (msg || {});
-            var _text   = String(_form.body || _form.text || "");
-            var _atts   = !_form.attachment ? []
-                : (Array.isArray(_form.attachment) ? _form.attachment : [_form.attachment]);
-            var _sendOpts = {};
-            if (replyToMessage) {
-                _sendOpts.replyToId = String(replyToMessage);
-                var _rjid = global._e2eeSenderJidMap && global._e2eeSenderJidMap.get(String(replyToMessage));
-                if (_rjid) _sendOpts.replyToSenderJid = _rjid;
-            }
-
-            var _e2eePromise = (async function () {
-                var _last;
-                // sendMediaE2EE: send each attachment
-                for (var _i = 0; _i < _atts.length; _i++) {
-                    var _att = _atts[_i]; if (!_att) continue;
-                    try {
-                        var _buf;
-                        if (Buffer.isBuffer(_att)) {
-                            _buf = _att;
-                        } else if (_att && typeof _att.read === "function") {
-                            _buf = await new Promise(function (res, rej) {
-                                var chunks = [];
-                                _att.on("data", function (c) { chunks.push(Buffer.isBuffer(c) ? c : Buffer.from(c)); });
-                                _att.on("end",  function ()  { res(Buffer.concat(chunks)); });
-                                _att.on("error", rej);
-                            });
-                        } else if (_att && _att.type === "Buffer" && Array.isArray(_att.data)) {
-                            _buf = Buffer.from(_att.data);
-                        } else { continue; }
-
-                        var _mt = (_att.mediaType ? String(_att.mediaType).toLowerCase() : null)
-                            || (function () {
-                                var p = String(_att.path || _att.filename || "").split(".").pop().toLowerCase();
-                                if (["jpg","jpeg","png","gif","webp","bmp"].includes(p)) return "image";
-                                if (["mp4","mov","avi","mkv","webm"].includes(p))        return "video";
-                                if (["mp3","ogg","oga","opus","wav","m4a","aac","flac"].includes(p)) return "audio";
-                                return "document";
-                            })();
-                        var _mOpts = Object.assign({}, _sendOpts);
-                        if (_i === 0 && _text) _mOpts.caption = _text;
-                        if (!_mOpts.mimeType && _att.mimeType) _mOpts.mimeType = _att.mimeType;
-                        if ((_mt === "file" || _mt === "document") && !_mOpts.filename)
-                            _mOpts.filename = (_att.filename || _att.path || "file.bin").split(/[\\/]/).pop();
-                        if (_att.duration != null) _mOpts.duration = Number(_att.duration);
-                        if (_att.width    != null) _mOpts.width    = Number(_att.width);
-                        if (_att.height   != null) _mOpts.height   = Number(_att.height);
-                        if (_att.ptt  || _att.voice) _mOpts.ptt = true;
-
-                        var _mRes = await _bridge.sendMedia(threadID, _mt, _buf, _mOpts);
-                        _last = { threadID: threadID, messageID: _mRes && _mRes.messageId ? String(_mRes.messageId) : undefined, isE2EE: true };
-                        if (_last.messageID) {
-                            global._e2eeMessageMap = global._e2eeMessageMap || new Map();
-                            global._e2eeMessageMap.set(_last.messageID, String(threadID));
-                            global._e2eeBotSentMsgIds = global._e2eeBotSentMsgIds || new Set();
-                            global._e2eeBotSentMsgIds.add(_last.messageID);
-                        }
-                    } catch (_me) { log.error("E2EE", "sendMedia att#" + _i + " failed:", _me && _me.message ? _me.message : _me); }
-                }
-                // sendMessageE2EE: send text (if no attachments, or text wasn't used as caption)
-                if (!_last || _atts.length === 0) {
-                    var _tRes = await _bridge.sendMessage(threadID, _text || "\u200b", _sendOpts);
-                    _last = { threadID: threadID, messageID: _tRes && _tRes.messageId ? String(_tRes.messageId) : undefined, isE2EE: true };
-                    if (_last.messageID) {
-                        global._e2eeMessageMap = global._e2eeMessageMap || new Map();
-                        global._e2eeMessageMap.set(_last.messageID, String(threadID));
-                        global._e2eeBotSentMsgIds = global._e2eeBotSentMsgIds || new Set();
-                        global._e2eeBotSentMsgIds.add(_last.messageID);
-                    }
-                }
-                return _last;
-            })();
-
-            // downloadE2EEMedia: exposed on api for received attachment decryption
-            if (typeof api.downloadE2EEMedia !== "function") {
-                api.downloadE2EEMedia = function (options) { return _bridge.downloadMedia(options); };
-            }
-
-            _e2eePromise.then(function (r) { callback(null, r); }).catch(function (e) { callback(e); });
-            return _e2eePromise;
-        }
-        // ── end E2EE routing ───────────────────────────────────────────────────────
-
         var msgType = utils.getType(msg);
         var threadIDType = utils.getType(threadID);
 
@@ -367,12 +275,6 @@ module.exports = function (defaultFuncs, api, ctx) {
         var configSource = (global.GoatBot && global.GoatBot.config) ? global.GoatBot.config : (ctx.config || {});
         var enableTypingIndicator = typeof configSource.enableTypingIndicator !== 'undefined' ? configSource.enableTypingIndicator : (ctx.config && ctx.config.enableTypingIndicator);
         var typingDuration = Number(configSource.typingDuration || (ctx.config && ctx.config.typingDuration) || 4000);
-        // E2EE threads need a longer visible duration — 1 second disappears before
-        // Messenger renders it. Use e2eeTypingDuration from config (default 3000 ms).
-        var _isE2EEThread = require('../e2ee').isE2EEChatJid(String(threadID));
-        if (_isE2EEThread) {
-            typingDuration = Number(configSource.e2eeTypingDuration || (ctx.config && ctx.config.e2eeTypingDuration) || 3000);
-        }
 
         if (enableTypingIndicator) {
             await api.sendTypingIndicator(true, threadID, function () { }).catch(function () { });

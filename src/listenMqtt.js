@@ -6,7 +6,6 @@ var mqtt = require('mqtt');
 var WebSocket = require('ws');
 var Transform = require('stream').Transform;
 const EventEmitter = require('events');
-var e2eeBridge = require("../e2ee");
 
 // ─── ANSI colour helpers ───────────────────────────────────────────────────────
 var C = {
@@ -400,19 +399,6 @@ function listenMqtt(defaultFuncs, api, ctx, globalCallback) {
             clearTimeout(rTimeout);
             if (ctx.globalOptions.emitReady) globalCallback({ type: "ready", error: null });
             delete ctx.tmsWait;
-
-            // ── E2EE bridge init ──────────────────────────────────────────────────
-            ctx._globalCallback = globalCallback;
-            if (ctx.globalOptions.enableE2EE === true) {
-                var bridge = e2eeBridge.createBridge(ctx);
-                if (global.GoatBot) global.GoatBot._e2eeBridge = bridge;
-                bridge.connect(globalCallback).catch(function (err) {
-                    log.error("listenMqtt", "E2EE bridge connect error:", err && err.message ? err.message : err);
-                });
-            } else {
-                if (global.GoatBot) global.GoatBot._e2eeBridge = null;
-            }
-            // ── end E2EE bridge init ──────────────────────────────────────────────
         };
     });
 

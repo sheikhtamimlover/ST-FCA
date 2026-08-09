@@ -1,19 +1,13 @@
 {
-  "name": "stfca",
-  "version": "1.2.29",
+  "name": "@bruxa/stfca",
+  "version": "1.2.31",
   "description": "Unofficial Facebook Chat API for Node.js with Auto-Update System - Enhanced by ST | Sheikh Tamim",
   "main": "index.js",
   "files": [
     "src/",
-    "build/",
-    "lib/",
     "index.js",
-    "index.mjs",
     "utils.js",
     "checkUpdate.js",
-    "e2ee.js",
-    "e2eebot.js",
-    "e2eebot_new.js",
     "config.json"
   ],
   "scripts": {
@@ -22,17 +16,21 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sheikhtamimlover/ST-FCA.git"
+    "url": "git+https://github.com/bruxa6t9/ST-FCA.git"
   },
   "keywords": [
     "facebook",
     "chat",
     "api",
     "bot",
+    "bruxa-bot",
+    "bruxa",
+    "rakib-adil",
     "messenger",
     "unofficial",
     "fca",
     "st-fca",
+    "st-bot",
     "sheikh-tamim",
     "stfca",
     "fbchatapi",
@@ -52,17 +50,21 @@
     "update-module",
     "update-function",
     "unofficial-facebook-chat-api",
-    "messengerwapper",
-    "e2ee",
-    "e2eefca",
-    "e2eesendmessage"
+    "messengerwapper"
   ],
-  "author": "ST | Sheikh Tamim",
+"author": "ST | Sheikh Tamim",
+ "maintainers": [
+    {
+      "name": "Rakib Adil",
+      "email": "bruxaxp100k@gmail.com",
+      "url": "https://github.com/bruxa6t9"
+    }
+  ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/sheikhtamimlover/ST-FCA/issues"
+    "url": "https://github.com/bruxa6t9/ST-FCA/issues"
   },
-  "homepage": "https://github.com/sheikhtamimlover/ST-FCA#readme",
+  "homepage": "https://github.com/bruxa6t9/ST-FCA#readme",
   "dependencies": {
     "axios": "^1.8.4",
     "bluebird": "^3.7.2",
